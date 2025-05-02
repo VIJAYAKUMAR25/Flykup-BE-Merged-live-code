@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "streaming-apis",
+      "source": "@streaming-apis/v2024.12.03#6hmv2zm1qrhyno",
+      "integrity": "sha512-p5a+vg/NQCo/ha07Lq0I6PV3NHcf79qINYDqnvpq75mueaAUm1c3P7P2ey30brv82j9VS5KMvhSvObNMvSufcA==",
+      "installerVersion": "6.1.2"
+    }
+  ]
+}

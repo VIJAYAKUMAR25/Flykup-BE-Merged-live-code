@@ -45,7 +45,8 @@ app.use(cors({
     "http://localhost:8081",
     "https://flykup-bidding.vercel.app",
     "https://flykup-admin.vercel.app",
-    "https://flykup-merge.vercel.app"
+    "https://flykup-merge.vercel.app",
+    "https://flykup-fe-merged-live-demo.vercel.app"
   ],
   credentials: true
 }));

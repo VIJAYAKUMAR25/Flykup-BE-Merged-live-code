@@ -9,6 +9,7 @@ import {
   sendEmailOtp,
   sendWelcomeEmail,
   sendPasswordResetSuccess,
+  sendForgotPasswordEmailOtp,
 } from "../email/send.js";
 import generateTokens from "../utils/generateTokens.js";
 import { COOKIE_OPTIONS, USER_PUBLIC_FIELDS } from "../utils/constants.js";
@@ -448,7 +449,7 @@ export const forgotPasswordRequest = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       status: false,
-      message: "Internal Server Error. Please try again later.",
+      message: error.message,
     });
   }
 };

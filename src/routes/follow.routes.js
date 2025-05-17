@@ -9,4 +9,7 @@ followRouter.delete("/", userAuth , unfollowUser);
 followRouter.get("/user-followings", userAuth, getFollowingsByUserId);
 followRouter.get("/user-followers", userAuth, getFollowersByUserId);
 
+
+
+
 export default followRouter;

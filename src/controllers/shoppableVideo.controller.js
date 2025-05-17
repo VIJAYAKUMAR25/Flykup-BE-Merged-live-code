@@ -416,3 +416,47 @@ export const deleteShoppableVideo = async (req, res) => {
         });
     }
 };
+
+
+export const updateVideoVisibility = async (req, res) => {
+    const { id: videoId } = req.params;
+    const { visibility } = req.body;
+
+    // Validate visibility input
+    if (!['public', 'private'].includes(visibility)) {
+        return res.status(400).json({
+            status: false,
+            message: "Visibility must be 'public' or 'private'."
+        });
+    }
+
+    try {
+        const updatedVideo = await ShoppableVideo.findByIdAndUpdate(
+            videoId,
+            { visibility },
+            { new: true, runValidators: true }
+        )
+            .populate("productsListed", PRODUCT_PUBLIC_FIELDS)
+            .populate({
+                path: 'host',
+                select: 'companyName businessName userInfo',
+                populate: { path: 'userInfo', select: 'name userName profileURL' }
+            });
+
+        if (!updatedVideo) {
+            return res.status(404).json({ status: false, message: "Video not found." });
+        }
+
+        res.status(200).json({
+            status: true,
+            message: "Video visibility updated successfully!",
+            data: updatedVideo
+        });
+    } catch (error) {
+        console.error("Error in updateVideoVisibility:", error);
+        res.status(500).json({
+            status: false,
+            message: error.message || "Internal server error."
+        });
+    }
+};

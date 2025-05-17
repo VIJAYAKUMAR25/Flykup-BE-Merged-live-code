@@ -14,7 +14,7 @@ import {
 import generateTokens from "../utils/generateTokens.js";
 import { COOKIE_OPTIONS, USER_PUBLIC_FIELDS } from "../utils/constants.js";
 import jwt from "jsonwebtoken";
-
+import mongoose from "mongoose"; 
 const jwtSecret = process.env.JWT_SECRET;
 const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
 
@@ -411,6 +411,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
+
 export const forgotPasswordRequest = async (req, res) => {
   const { emailId } = req.body;
   const lowerCaseEmail = emailId.toLowerCase().trim();
@@ -549,7 +550,6 @@ export const getAuthenticatedUser = async (req, res) => {
     if (!accessToken) {
       return res.status(401).json({ status: false, message: "Unauthorized" });
     }
-
     const decoded = jwt.verify(accessToken, jwtSecret);
     const user = await User.findById(decoded._id)
       .select(USER_PUBLIC_FIELDS)
@@ -558,11 +558,9 @@ export const getAuthenticatedUser = async (req, res) => {
         select: "approvalStatus rejectedReason",
         options: { strictPopulate: false },
       });
-
     if (!user) {
       return res.status(401).json({ status: false, message: "Unauthorized" });
     }
-
     res
       .status(200)
       .json({ status: true, message: "Authorized User!", data: user });
@@ -619,5 +617,270 @@ export const logoutUser = async (req, res) => {
     return res
       .status(500)
       .json({ status: false, message: "Internal server error." });
+  }
+};
+
+
+
+
+// user.controller.js
+
+// Add categories
+export const addCategories = async (req, res) => {
+  try {
+    const user = req.user;
+    const { categories } = req.body;
+
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({
+        status: false,
+        message: "Categories should be an array of strings"
+      });
+    }
+
+    // Add new categories and avoid duplicates
+    categories.forEach(cat => {
+      if (!user.categories.includes(cat)) {
+        user.categories.push(cat);
+      }
+    });
+
+    await user.save();
+
+    res.status(200).json({
+      status: true,
+      message: "Categories added successfully",
+      data: user.categories
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Internal server error"
+    });
+  }
+};
+
+// Get categories
+export const getCategories = async (req, res) => {
+  try {
+    const user = req.user;
+    res.status(200).json({
+      status: true,
+      data: user.categories
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Internal server error"
+    });
+  }
+};
+
+// Update categories
+export const updateCategories = async (req, res) => {
+  try {
+    const user = req.user;
+    const { categories } = req.body;
+
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({
+        status: false,
+        message: "Categories should be an array of strings"
+      });
+    }
+
+    user.categories = [...new Set(categories)]; // Remove duplicates
+    await user.save();
+
+    res.status(200).json({
+      status: true,
+      message: "Categories updated successfully",
+      data: user.categories
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: "Internal server error"
+    });
+  }
+};
+
+// Address Controllers
+
+// Add Address
+export const addAddress = async (req, res) => {
+  try {
+    const user = req.user;
+    const { name, mobile, line1, city, state, pincode, alternateMobile, line2 } = req.body;
+
+    // Validate required fields
+    if (!name || !mobile || !line1 || !city || !state || !pincode) {
+      return res.status(400).json({
+        status: false,
+        message: "Missing required fields: name, mobile, line1, city, state, pincode",
+      });
+    }
+
+    const newAddress = {
+      name,
+      mobile,
+      line1,
+      city,
+      state,
+      pincode,
+      alternateMobile: alternateMobile || null,
+      line2: line2 || "",
+    };
+
+    user.address.push(newAddress);
+    await user.save();
+
+    const addedAddress = user.address[user.address.length - 1];
+
+    return res.status(201).json({
+      status: true,
+      message: "Address added successfully",
+      data: addedAddress,
+    });
+  } catch (error) {
+    console.error("Error adding address:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Get All Addresses
+export const getAllAddresses = async (req, res) => {
+  try {
+    const user = req.user;
+    return res.status(200).json({
+      status: true,
+      data: user.address,
+    });
+  } catch (error) {
+    console.error("Error getting addresses:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Get Single Address
+export const getAddressById = async (req, res) => {
+  try {
+    const user = req.user;
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid address ID",
+      });
+    }
+
+    const address = user.address.id(id);
+    if (!address) {
+      return res.status(404).json({
+        status: false,
+        message: "Address not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      data: address,
+    });
+  } catch (error) {
+    console.error("Error getting address:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Update Address
+export const updateAddress = async (req, res) => {
+  try {
+    const user = req.user;
+    const { id } = req.params;
+    const updates = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid address ID",
+      });
+    }
+
+    const address = user.address.id(id);
+    if (!address) {
+      return res.status(404).json({
+        status: false,
+        message: "Address not found",
+      });
+    }
+
+    // Update allowed fields
+    const allowedUpdates = ["name", "mobile", "alternateMobile", "line1", "line2", "city", "state", "pincode"];
+    Object.keys(updates).forEach((key) => {
+      if (allowedUpdates.includes(key)) {
+        address[key] = updates[key];
+      }
+    });
+
+    await user.save();
+
+    return res.status(200).json({
+      status: true,
+      message: "Address updated successfully",
+      data: address,
+    });
+  } catch (error) {
+    console.error("Error updating address:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Delete Address
+export const deleteAddress = async (req, res) => {
+  try {
+    const user = req.user;
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid address ID",
+      });
+    }
+
+    const addressIndex = user.address.findIndex(addr => addr._id.toString() === id);
+    if (addressIndex === -1) {
+      return res.status(404).json({
+        status: false,
+        message: "Address not found",
+      });
+    }
+
+    user.address.splice(addressIndex, 1);
+    await user.save();
+
+    return res.status(200).json({
+      status: true,
+      message: "Address deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting address:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Internal server error",
+    });
   }
 };

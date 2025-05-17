@@ -4,6 +4,8 @@ import {
 } from "../../email/send.js";
 import Seller from "../../models/seller.model.js";
 import User from "../../models/user.model.js";
+import { addSasUrlsToSeller } from "../../utils/azureBlob.js";
+import { createSearchRegex } from "../../utils/helper.js";
 
 
 export const reviewSellerApplication = async (req, res) => {
@@ -89,13 +91,14 @@ export const getOldPendingApplications = async (req, res) => {
   let searchFilter = {};
 
   if (searchQuery) {
+     const regex = createSearchRegex(searchQuery);
     searchFilter = {
       $or: [
-        { "basicInfo.name": { $regex: searchQuery, $options: "i" } },
-        { "basicInfo.phone": { $regex: searchQuery, $options: "i" } },
-        { "basicInfo.email": { $regex: searchQuery, $options: "i" } },
-        { "basicInfo.gstNumber": { $regex: searchQuery, $options: "i" } },
-        { "aadharInfo.aadharNumber": { $regex: searchQuery, $options: "i" } },
+        { "basicInfo.name": regex },
+        { "basicInfo.phone": regex },
+        { "basicInfo.email":regex },
+        { "basicInfo.gstNumber": regex },
+        { "aadharInfo.aadharNumber": regex },
       ],
     };
   }
@@ -148,19 +151,22 @@ export const getNewPendingApplications = async (req, res) => {
   let searchFilter = {};
 
   if (searchQuery) {
+
+    const regex = createSearchRegex(searchQuery);
+
     searchFilter = {
       $or: [
-        { companyName: { $regex: searchQuery, $options: "i" } },
-        { mobileNumber: { $regex: searchQuery, $options: "i" } },
-        { email: { $regex: searchQuery, $options: "i" } },
-        { "gstInfo.gstNumber": { $regex: searchQuery, $options: "i" } },
-        { "aadhaarInfo.aadhaarNumber": { $regex: searchQuery, $options: "i" } },
+        { companyName: regex },
+        { mobileNumber: regex },
+        { email: regex },
+        { "gstInfo.gstNumber": regex },
+        { "aadhaarInfo.aadhaarNumber": regex },
       ],
     };
   }
 
   try {
-    const filter = {
+    const baseFilter = {
       approvalStatus: "pending",
       basicInfo: { $exists: false },
       ...searchFilter,
@@ -168,23 +174,30 @@ export const getNewPendingApplications = async (req, res) => {
 
     // Seller type filtering
     const sellerType = req.query.filterSellerType || "all";
-    if (sellerType !== "all") {
-      filter["sellerType"] = sellerType;
+    if (sellerType !== "all" && ["brand","social"].includes(sellerType)) {
+      baseFilter["sellerType"] = sellerType;
     }
 
-    const totalCount = await Seller.countDocuments(filter);
+    const finalFilter = baseFilter;
 
-    const newApplicationsPending = await Seller.find(filter)
+    const totalCount = await Seller.countDocuments(finalFilter);
+
+    const newApplicationsPendingRaw = await Seller.find(finalFilter)
       .populate("userInfo", "name emailId userName")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
+      // generate signed urls for private docs 
+      const applicationPromises = newApplicationsPendingRaw.map(addSasUrlsToSeller);
+      const pendingApplicationsWithUrls = await Promise.all(applicationPromises);
+      const finalApplicationData = pendingApplicationsWithUrls.filter( seller => seller !== null);
+
     res.status(200).json({
       status: true,
       message: "New seller applications - pending : fetched successfully!",
-      data: newApplicationsPending || [],
+      data: finalApplicationData || [],
       totalCount,
     });
   } catch (error) {
@@ -207,13 +220,15 @@ export const getOldApprovedApplications = async (req, res) => {
   let searchFilter = {};
 
   if (searchQuery) {
+    const regex = createSearchRegex(searchQuery);
+
     searchFilter = {
       $or: [
-        { "basicInfo.name": { $regex: searchQuery, $options: "i" } },
-        { "basicInfo.phone": { $regex: searchQuery, $options: "i" } },
-        { "basicInfo.email": { $regex: searchQuery, $options: "i" } },
-        { "basicInfo.gstNumber": { $regex: searchQuery, $options: "i" } },
-        { "aadharInfo.aadharNumber": { $regex: searchQuery, $options: "i" } },
+        { "basicInfo.name": regex },
+        { "basicInfo.phone": regex },
+        { "basicInfo.email": regex },
+        { "basicInfo.gstNumber": regex },
+        { "aadharInfo.aadharNumber": regex },
       ],
     };
   }
@@ -266,19 +281,22 @@ export const getNewApprovedApplications = async (req, res) => {
   let searchFilter = {};
 
   if (searchQuery) {
+
+    const regex = createSearchRegex(searchQuery);
+
     searchFilter = {
       $or: [
-        { companyName: { $regex: searchQuery, $options: "i" } },
-        { mobileNumber: { $regex: searchQuery, $options: "i" } },
-        { email: { $regex: searchQuery, $options: "i" } },
-        { "gstInfo.gstNumber": { $regex: searchQuery, $options: "i" } },
-        { "aadhaarInfo.aadhaarNumber": { $regex: searchQuery, $options: "i" } },
+        { companyName: regex },
+        { mobileNumber: regex },
+        { email: regex },
+        { "gstInfo.gstNumber": regex },
+        { "aadhaarInfo.aadhaarNumber": regex }
       ],
     };
   }
 
   try {
-    const filter = {
+    const baseFilter = {
       approvalStatus: "approved",
       basicInfo: { $exists: false },
       ...searchFilter,
@@ -286,25 +304,35 @@ export const getNewApprovedApplications = async (req, res) => {
 
     // Seller type filtering
     const sellerType = req.query.filterSellerType || "all";
-    if (sellerType !== "all") {
-      filter["sellerType"] = sellerType;
+    if (sellerType !== "all" && ["brand", "social"].includes(sellerType)) {
+      baseFilter["sellerType"] = sellerType;
     }
 
-    const totalCount = await Seller.countDocuments(filter);
+    const finalFilter = baseFilter;
 
-    const approvedSellers = await Seller.find(filter)
+    const totalCount = await Seller.countDocuments(finalFilter);
+
+    const approvedSellersRaw = await Seller.find(finalFilter)
       .populate({ path: "userInfo", select: "accessAllowed userName emailId" })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
+      // generate signed urls for private docs 
+      const approvedSellersPromises = approvedSellersRaw.map(addSasUrlsToSeller);
+
+      const approvedSellersWithUrls = await Promise.all(approvedSellersPromises);
+
+      const finalSellerData = approvedSellersWithUrls.filter( seller => seller !== null);
+
     return res.status(200).json({
       status: true,
       message: "New approved sellers fetched successfully!",
-      data: approvedSellers || [],
+      data: finalSellerData || [],
       totalCount,
     });
+
   } catch (error) {
     console.error("Error in getNewApprovedApplications:", error.message);
     return res.status(500).json({

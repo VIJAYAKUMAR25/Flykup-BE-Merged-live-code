@@ -52,7 +52,29 @@ export const RESERVED_USERNAMES = [
 
 
 
-export const USER_PUBLIC_FIELDS = 'name emailId userName mobile role profileURL sellerInfo accessAllowed filledNewSellerForm backgroundCoverURL bio';
+// export const USER_PUBLIC_FIELDS = 'name emailId userName mobile role profileURL sellerInfo accessAllowed filledNewSellerForm backgroundCoverURL bio categories';
+
+export const USER_PUBLIC_FIELDS = [
+  'name',
+  'emailId',
+  'userName',
+  'mobile',
+  'role',
+  'profileURL',
+  'sellerInfo',
+  'dropshipperInfo',
+  'accessAllowed',
+  'filledNewSellerForm',
+  'backgroundCoverURL',
+  'bio',
+  'categories',
+  'isVerified',
+  'verificationDate',
+  'isPaymentEnabled',
+  'paymentEnabledAt',
+  'address',
+  'verifiedAddress'
+].join(' ');
 
 export const SELLER_PUBLIC_FIELDS = 'userInfo companyName email sellerType businessType sellerExperienceInfo productCategories wantToSell approvalStatus rejectedReason';
 

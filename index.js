@@ -28,6 +28,7 @@ import shipperRouter from './src/routes/shipper.routes.js';
 import azureFileUploadRouter from './src/routes/azure.routes.js';
 import videoRouter  from './src/routes/video.routes.js';
 import globalSearchRouter from './src/routes/globalSearch.routes.js';
+import initializeSocket from './src/utils/socket.js';
 
 // Initialize Express app and HTTP server
 const app = express();
@@ -91,6 +92,7 @@ connectDB()
     console.log(chalk.green.bold("🌐 DB Connected Successfully..."));
 
     const PORT = process.env.PORT || 6969;
+     const io = initializeSocket(server);
     server.listen(PORT, () => {
       console.log(chalk.green.bold("\n🚀 Flykup Backend Server is running:\n"));
       console.log(`  ${chalk.green.bold("➜")}  Local:   ${chalk.cyan.underline(`http://localhost:${PORT}/`)}`);

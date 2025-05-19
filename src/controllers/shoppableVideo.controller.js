@@ -252,50 +252,6 @@ export const getShoppableVideoById = async (req, res) => {
 };
 
 
-// export const getShoppableVideosBySeller = async (req, res) => {
-//     let sellerId;
-
-//     if (req.seller) {
-//         sellerId = req.seller._id;
-//     }
-//     else if (req.params.sellerId) {
-//         sellerId = req.params.sellerId;
-//     }
-//     else {
-//         return res.status(400).json({
-//             status: false,
-//             message: "Seller ID is required.",
-//         });
-//     }
-
-//     try {
-//         const videos = await ShoppableVideo.find({ sellerId })
-//             .populate("productsListed", PRODUCT_PUBLIC_FIELDS)
-//             .populate("sellerId", "companyName")
-//             .sort({ createdAt: -1 })
-//             .lean();
-
-//         if (!videos.length) {
-//             return res.status(200).json({
-//                 status: true,
-//                 message: "No shoppable videos found for this seller.",
-//                 data: []
-//             });
-//         }
-
-//         res.status(200).json({
-//             status: true,
-//             message: "Shoppable videos by seller fetched successfully!",
-//             data: videos
-//         });
-//     } catch (error) {
-//         console.error("Error in getShoppableVideosBySeller:", error.message);
-//         res.status(500).json({
-//             status: false,
-//             message: "Internal server error."
-//         });
-//     }
-// };
 
 // --- NEW FUNCTION: Get MY Hosted Shoppable Videos ---
 // Uses 'protect' middleware
@@ -460,3 +416,168 @@ export const updateVideoVisibility = async (req, res) => {
         });
     }
 };
+
+
+
+// UPLOADING STATUS GETTING IN SOCKET
+
+export const getShoppableVideoDetailsForStatus = async (videoId) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+      return { error: 'Invalid video ID format', status: 400, data: null };
+    }
+    const video = await ShoppableVideo.findById(videoId)
+      .select('title processingStatus visibility host hostModel hlsMasterPlaylistUrl processingError createdAt updatedAt'); // Add any other fields client needs
+
+    if (!video) {
+      return { error: 'Shoppable video not found', status: 404, data: null };
+    }
+    return { error: null, status: 200, data: video.toObject() }; // Use .toObject() for plain JS object
+  } catch (error) {
+    console.error(`Error fetching shoppable video details for status (ID: ${videoId}):`, error);
+    return { error: 'Internal server error while fetching video status', status: 500, data: null };
+  }
+};
+
+
+export const updateVideoProcessingDetails = async (req, res) => {
+    const { id } = req.params; 
+    const {
+        processingStatus,
+        renditions,
+        masterHlsUrl, // This is the new field from your processing service
+        videoThumbnail, // This is the new field for thumbnail from processing
+        hlsMasterPlaylistUrl, // Optional: if your service also sends this explicitly
+        thumbnailURL,         // Optional: if your service also sends this for the main thumbnail
+        processedFileSize,
+        durationSeconds,
+        processingError
+    } = req.body;
+
+    // IMPORTANT: Add Authentication/Authorization for this endpoint
+    // For example, check a shared secret in headers:
+    // const sharedSecret = req.headers['x-processing-secret'];
+    // if (sharedSecret !== process.env.VIDEO_PROCESSING_SECRET) {
+    //   return res.status(401).json({ status: false, message: "Unauthorized" });
+    // }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ status: false, message: "Invalid video ID format." });
+    }
+
+    try {
+        const video = await ShoppableVideo.findById(id);
+        if (!video) {
+            return res.status(404).json({ status: false, message: "Shoppable video not found." });
+        }
+
+        const updateData = {};
+
+        if (processingStatus) updateData.processingStatus = processingStatus;
+        if (renditions) updateData.renditions = renditions;
+        if (masterHlsUrl) updateData.masterHlsUrl = masterHlsUrl; 
+        if (videoThumbnail) updateData.videoThumbnail = videoThumbnail; 
+
+        // Optional: Decide if these new fields should also update existing fields
+        // For example, if masterHlsUrl from processing is the definitive HLS master playlist
+        if (masterHlsUrl) updateData.hlsMasterPlaylistUrl = masterHlsUrl;
+        // If videoThumbnail from processing is the definitive thumbnail
+        if (videoThumbnail) updateData.thumbnailURL = videoThumbnail;
+
+
+        if (hlsMasterPlaylistUrl) updateData.hlsMasterPlaylistUrl = hlsMasterPlaylistUrl; // If sent explicitly
+        if (thumbnailURL) updateData.thumbnailURL = thumbnailURL; // If sent explicitly
+
+        if (processedFileSize !== undefined) updateData.processedFileSize = processedFileSize;
+        if (durationSeconds !== undefined) updateData.durationSeconds = durationSeconds;
+        if (processingError) updateData.processingError = processingError;
+        else if (processingStatus === "failed") { // If status is failed but no specific error, clear previous
+            updateData.processingError = updateData.processingError || "Processing failed without specific error message.";
+        } else { // If successful, clear any previous error
+            updateData.processingError = null;
+        }
+
+
+        // If processing is successful ('published' or your equivalent success state),
+        // ensure no lingering error message.
+        if (processingStatus === "published" || processingStatus === "transcoding_complete") {
+            updateData.processingError = null;
+        }
+
+
+        const updatedVideo = await ShoppableVideo.findByIdAndUpdate(id, { $set: updateData }, { new: true })
+            .populate("productsListed", PRODUCT_PUBLIC_FIELDS)
+            .populate({
+                path: 'host',
+                select: 'companyName businessName userInfo',
+                populate: { path: 'userInfo', select: 'name userName profileURL' }
+            });
+
+        if (!updatedVideo) { // Should not happen if findById worked, but good practice
+            return res.status(404).json({ status: false, message: "Shoppable video not found after update attempt." });
+        }
+
+        res.status(200).json({
+            status: true,
+            message: "Shoppable video processing details updated successfully.",
+            data: updatedVideo
+        });
+
+    } catch (error) {
+        console.error("Error in updateVideoProcessingDetails:", error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ status: false, message: error.message, errors: error.errors });
+        }
+        res.status(500).json({
+            status: false,
+            message: "Internal server error while updating video processing details."
+        });
+    }
+};
+
+
+
+// export const getShoppableVideosBySeller = async (req, res) => {
+//     let sellerId;
+
+//     if (req.seller) {
+//         sellerId = req.seller._id;
+//     }
+//     else if (req.params.sellerId) {
+//         sellerId = req.params.sellerId;
+//     }
+//     else {
+//         return res.status(400).json({
+//             status: false,
+//             message: "Seller ID is required.",
+//         });
+//     }
+
+//     try {
+//         const videos = await ShoppableVideo.find({ sellerId })
+//             .populate("productsListed", PRODUCT_PUBLIC_FIELDS)
+//             .populate("sellerId", "companyName")
+//             .sort({ createdAt: -1 })
+//             .lean();
+
+//         if (!videos.length) {
+//             return res.status(200).json({
+//                 status: true,
+//                 message: "No shoppable videos found for this seller.",
+//                 data: []
+//             });
+//         }
+
+//         res.status(200).json({
+//             status: true,
+//             message: "Shoppable videos by seller fetched successfully!",
+//             data: videos
+//         });
+//     } catch (error) {
+//         console.error("Error in getShoppableVideosBySeller:", error.message);
+//         res.status(500).json({
+//             status: false,
+//             message: "Internal server error."
+//         });
+//     }
+// };

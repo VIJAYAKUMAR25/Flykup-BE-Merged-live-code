@@ -1,6 +1,6 @@
 import Express from 'express';
 import { sellerAuth, userAuth ,canHostShow , isVideoHost} from '../middlewares/auth.js';
-import { createShoppableVideo, deleteShoppableVideo, getMyHostedShoppableVideos, getAllShoppableVideos, getShoppableVideoById, updateShoppableVideo, updateVideoVisibility } from '../controllers/shoppableVideo.controller.js';
+import { createShoppableVideo, deleteShoppableVideo, getMyHostedShoppableVideos,updateVideoProcessingDetails , getAllShoppableVideos, getShoppableVideoById, updateShoppableVideo, updateVideoVisibility } from '../controllers/shoppableVideo.controller.js';
 
 const shoppableVideoRouter = Express.Router();
 
@@ -27,4 +27,6 @@ shoppableVideoRouter.get("/", userAuth, getAllShoppableVideos);
 
 // Update visibility of a shoppable video (Requires ownership)
 shoppableVideoRouter.put("/:id/visibility", userAuth, isVideoHost, updateVideoVisibility);
+shoppableVideoRouter.post("/:id/processing-callback", updateVideoProcessingDetails);
+
 export default shoppableVideoRouter;

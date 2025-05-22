@@ -169,8 +169,6 @@ const ShoppableVideoSchema = new Schema(
     // thumbnailURL might be set initially or updated by the processing service
     thumbnailURL: {
       type: String,
-      required: true, // Keep required for initial upload
-      trim: true,
     },
     productsListed: {
       type: [

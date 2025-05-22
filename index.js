@@ -47,7 +47,8 @@ app.use(cors({
     "https://flykup-bidding.vercel.app",
     "https://flykup-admin.vercel.app",
     "https://flykup-merge.vercel.app",
-    "https://flykup-fe-merged-live-demo.vercel.app"
+    "https://flykup-fe-merged-live-demo.vercel.app",
+    "https://flykup-digi-store.vercel.app"
   ],
   credentials: true
 }));

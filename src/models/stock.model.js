@@ -19,6 +19,7 @@ const StockSchema = new Schema(
         },
         images: [
             {
+                key: { type: String, maxLength: 255, default: null },
                 blobName: { type: String, maxLength: 255, default: null },
                 azureUrl: { type: String, maxLength: 1024, default: null },
             },

@@ -588,10 +588,16 @@ export const handleVideoProcessingUpdate = async (req, res) => {
         }
 
         if (optimizationStatus === "failed") {
-            updateFields.processingError = processingError || "Video processing failed.";
-            updateFields.processingStatus = "failed";
-            updateFields.visibility = "private";
-        }
+                updateFields.optimizedKey = null;
+                updateFields.masterPlaylistKey = null;
+                updateFields.optimizedSize = null;
+                updateFields.reductionPercentage = null;
+                updateFields.durationTook = null;
+                updateFields.renditions = [];
+                updateFields.processingError = processingError || "Video processing failed.";
+                updateFields.processingStatus = "failed";
+                updateFields.visibility = "private";
+            }
 
         const updatedVideo = await ShoppableVideo.findOneAndUpdate(
             { videoId },

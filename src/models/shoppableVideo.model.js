@@ -170,6 +170,7 @@ const ShoppableVideoSchema = new Schema(
     thumbnailURL: {
       type: String,
     },
+
     productsListed: {
       type: [
         {
@@ -189,8 +190,8 @@ const ShoppableVideoSchema = new Schema(
     },
     processingStatus: {
       type: String,
-      enum: ["queued", "processing", "published", "failed", "transcoding_complete"], // Added new status
-      default: "queued",
+      enum: ["queued", "processing", "published", "failed", "transcoding_complete","uploaded"], // Added new status
+      default: "uploaded",
       index: true,
     },
     visibility: {
@@ -211,15 +212,7 @@ const ShoppableVideoSchema = new Schema(
       type: Number,
       default: null,
     },
-    hlsMasterPlaylistUrl: { // This might be the same as the new masterHlsUrl
-      type: String,
-      default: null,
-    },
-    processedVideoContainer: {
-      type: String,
-      default: processedVideoContainer || null,
-    },
-    processedVideoBasePath: {
+    optimizedKey: {
       type: String,
       default: null,
     },
@@ -227,7 +220,7 @@ const ShoppableVideoSchema = new Schema(
       type: String,
       default: null,
     },
-    processedFileSize: {
+   optimizedSize: {
       type: Number,
       default: null,
     },
@@ -241,15 +234,31 @@ const ShoppableVideoSchema = new Schema(
       type: [RenditionSchema], // Array of rendition objects
       default: [],
     },
-    masterHlsUrl: { // Dedicated field from processing service
+    videoId: { // Optimized video URL for playback from other db
       type: String,
       default: null,
       trim: true,
     },
-    videoThumbnail: { // Dedicated thumbnail from processing service
+    optimizationStatus: { // Status of optimization process
+      type: String,
+      enum: ["success", "failed","progress"],
+      default: "progress",
+
+    },
+    reductionPercentage:{
+      type:String,
+      default: null,
+      trim: true,
+    },
+    masterPlaylistKey: { // Key for the master playlist in the public container
       type: String,
       default: null,
       trim: true,
+    },
+    durationTook: {
+      type: String, // Duration took for the optimization process
+      trim: true,
+      default: null, // Duration in seconds for the optimization process
     },
     // === END NEW FIELDS ===
   },

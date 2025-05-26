@@ -440,100 +440,140 @@ export const getShoppableVideoDetailsForStatus = async (videoId) => {
 };
 
 
-export const updateVideoProcessingDetails = async (req, res) => {
-    const { id } = req.params; 
+
+// Handle Video Processing Update from Rvin Server
+
+
+// In shoppableVideo.controller.js
+export const handleVideoProcessingUpdate = async (req, res) => {
     const {
-        processingStatus,
-        renditions,
-        masterHlsUrl, // This is the new field from your processing service
-        videoThumbnail, // This is the new field for thumbnail from processing
-        hlsMasterPlaylistUrl, // Optional: if your service also sends this explicitly
-        thumbnailURL,         // Optional: if your service also sends this for the main thumbnail
-        processedFileSize,
+        videoId, // The string ID like "8457ade8-57fd-4fef-a95f-d91cae11d96d"
+        optimizationStatus,
+        optimizedKey,
+        processingError,
+        // processedFileSize, // Schema has optimizedSize, let's use that
         durationSeconds,
-        processingError
+        renditions,
+        optimizedSize,
+        reductionPercentage,
+        durationTook,
+        masterPlaylistKey,
+        hlsMasterPlaylistUrl // Assuming this might also come from the processing service
     } = req.body;
 
-    // IMPORTANT: Add Authentication/Authorization for this endpoint
-    // For example, check a shared secret in headers:
-    // const sharedSecret = req.headers['x-processing-secret'];
-    // if (sharedSecret !== process.env.VIDEO_PROCESSING_SECRET) {
-    //   return res.status(401).json({ status: false, message: "Unauthorized" });
-    // }
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ status: false, message: "Invalid video ID format." });
+    // Basic validation
+    if (!videoId) {
+        return res.status(400).json({
+            status: false,
+            message: "Missing 'videoId' in request body."
+        });
+    }
+    if (!optimizationStatus || !['success', 'failed'].includes(optimizationStatus)) {
+        return res.status(400).json({
+            status: false,
+            message: "Missing or invalid 'optimizationStatus'. Must be 'success' or 'failed'."
+        });
     }
 
     try {
-        const video = await ShoppableVideo.findById(id);
-        if (!video) {
-            return res.status(404).json({ status: false, message: "Shoppable video not found." });
-        }
+        // Find the video by the custom 'videoId' field, NOT by '_id'
+        const videoToUpdate = await ShoppableVideo.findOne({ videoId: videoId });
 
-        const updateData = {};
-
-        if (processingStatus) updateData.processingStatus = processingStatus;
-        if (renditions) updateData.renditions = renditions;
-        if (masterHlsUrl) updateData.masterHlsUrl = masterHlsUrl; 
-        if (videoThumbnail) updateData.videoThumbnail = videoThumbnail; 
-
-        // Optional: Decide if these new fields should also update existing fields
-        // For example, if masterHlsUrl from processing is the definitive HLS master playlist
-        if (masterHlsUrl) updateData.hlsMasterPlaylistUrl = masterHlsUrl;
-        // If videoThumbnail from processing is the definitive thumbnail
-        if (videoThumbnail) updateData.thumbnailURL = videoThumbnail;
-
-
-        if (hlsMasterPlaylistUrl) updateData.hlsMasterPlaylistUrl = hlsMasterPlaylistUrl; // If sent explicitly
-        if (thumbnailURL) updateData.thumbnailURL = thumbnailURL; // If sent explicitly
-
-        if (processedFileSize !== undefined) updateData.processedFileSize = processedFileSize;
-        if (durationSeconds !== undefined) updateData.durationSeconds = durationSeconds;
-        if (processingError) updateData.processingError = processingError;
-        else if (processingStatus === "failed") { // If status is failed but no specific error, clear previous
-            updateData.processingError = updateData.processingError || "Processing failed without specific error message.";
-        } else { // If successful, clear any previous error
-            updateData.processingError = null;
-        }
-
-
-        // If processing is successful ('published' or your equivalent success state),
-        // ensure no lingering error message.
-        if (processingStatus === "published" || processingStatus === "transcoding_complete") {
-            updateData.processingError = null;
-        }
-
-
-        const updatedVideo = await ShoppableVideo.findByIdAndUpdate(id, { $set: updateData }, { new: true })
-            .populate("productsListed", PRODUCT_PUBLIC_FIELDS)
-            .populate({
-                path: 'host',
-                select: 'companyName businessName userInfo',
-                populate: { path: 'userInfo', select: 'name userName profileURL' }
+        if (!videoToUpdate) {
+            return res.status(404).json({
+                status: false,
+                message: `Shoppable video with videoId '${videoId}' not found.`
             });
-
-        if (!updatedVideo) { // Should not happen if findById worked, but good practice
-            return res.status(404).json({ status: false, message: "Shoppable video not found after update attempt." });
         }
 
-        res.status(200).json({
+        // Prepare fields to update
+        const updateFields = {
+            optimizationStatus,
+            optimizedKey: optimizedKey !== undefined ? optimizedKey : videoToUpdate.optimizedKey,
+            processingError: processingError !== undefined ? processingError : videoToUpdate.processingError,
+            durationSeconds: durationSeconds !== undefined ? durationSeconds : videoToUpdate.durationSeconds,
+            renditions: renditions !== undefined ? renditions : videoToUpdate.renditions,
+            optimizedSize: optimizedSize !== undefined ? optimizedSize : videoToUpdate.optimizedSize,
+            reductionPercentage: reductionPercentage !== undefined ? reductionPercentage : videoToUpdate.reductionPercentage,
+            durationTook: durationTook !== undefined ? durationTook : videoToUpdate.durationTook,
+            masterPlaylistKey: masterPlaylistKey !== undefined ? masterPlaylistKey : videoToUpdate.masterPlaylistKey,
+            // If your processing service provides the full HLS URL, you might want to update it here too.
+            // Assuming your schema's hlsMasterPlaylistUrl is meant for this:
+            hlsMasterPlaylistUrl: hlsMasterPlaylistUrl !== undefined ? hlsMasterPlaylistUrl : videoToUpdate.hlsMasterPlaylistUrl,
+        };
+
+        if (optimizationStatus === "success") {
+            updateFields.processingStatus = "published";
+            updateFields.visibility = "public";
+            // Clear processingError if it was a success
+            updateFields.processingError = null;
+        } else if (optimizationStatus === "failed") {
+            updateFields.processingStatus = "failed";
+            updateFields.visibility = "private"; // Keep it private or as per your logic if it fails
+            // Ensure processingError is set if provided, otherwise keep existing or set a generic one.
+            updateFields.processingError = processingError || "Video processing failed without a specific error message.";
+        }
+
+        const updatedVideo = await ShoppableVideo.findOneAndUpdate(
+            { videoId: videoId }, // Query by videoId
+            { $set: updateFields },
+            { new: true, runValidators: true }
+        )
+        .populate("productsListed", PRODUCT_PUBLIC_FIELDS)
+        .populate({
+            path: 'host',
+            select: 'companyName businessName userInfo',
+            populate: { path: 'userInfo', select: 'name userName profileURL' }
+        });
+
+
+        if (!updatedVideo) {
+            // Should not happen if findOne succeeded, but as a safeguard
+            return res.status(404).json({
+                status: false,
+                message: `Shoppable video with videoId '${videoId}' not found during update.`
+            });
+        }
+
+        return res.status(200).json({
             status: true,
-            message: "Shoppable video processing details updated successfully.",
+            message: `Shoppable video processing status updated successfully for videoId '${videoId}'.`,
             data: updatedVideo
         });
 
     } catch (error) {
-        console.error("Error in updateVideoProcessingDetails:", error);
+        console.error(`Error in handleVideoProcessingUpdate for videoId '${videoId}':`, error);
         if (error.name === 'ValidationError') {
             return res.status(400).json({ status: false, message: error.message, errors: error.errors });
         }
-        res.status(500).json({
+        return res.status(500).json({
             status: false,
-            message: "Internal server error while updating video processing details."
+            message: "Internal server error while updating video processing status.",
+            error: error.message
         });
     }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

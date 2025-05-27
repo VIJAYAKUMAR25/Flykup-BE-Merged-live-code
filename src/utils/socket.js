@@ -69,7 +69,7 @@ export const initializeSocket = (server) => {
                 console.log(chalk.green(`[Socket.IO] Sent status for ShoppableVideo ${videoId} to ${socket.id}: ${result.data.processingStatus}`));
 
                 // If the video is still processing, automatically subscribe the user to the room for updates
-                if (result.data && (result.data.processingStatus === 'queued' || result.data.processingStatus === 'processing')) {
+                if (result.data && ( result.data.processingStatus === 'processing' || result.data.processingStatus === 'failed'|| result.data.processingStatus === 'uploaded')) {
                     const roomName = `shoppable-video-${videoId}`;
                     socket.join(roomName);
                     console.log(chalk.magenta(`[Socket.IO] Client ${socket.id} auto-joined room ${roomName} for live updates on video ${videoId}`));

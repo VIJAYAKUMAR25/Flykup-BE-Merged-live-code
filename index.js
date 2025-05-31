@@ -29,10 +29,20 @@ import azureFileUploadRouter from './src/routes/azure.routes.js';
 import videoRouter  from './src/routes/video.routes.js';
 import globalSearchRouter from './src/routes/globalSearch.routes.js';
 import initializeSocket from './src/utils/socket.js';
+import { blockAccessMiddleware } from './src/utils/blockAccess.js';
+import blockedRegionRouter from './src/routes/blockedRegion.routes.js';
+import statusRouter from './src/routes/statusRouter.js';
+import adminLogsRouter from './src/routes/admin/adminLoginLog.routes.js';
+import notificationRouter from './src/routes/notification.routes.js';
+
 
 // Initialize Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
+// --- Configure Trust Proxy ---
+// IMPORTANT: Set this EARLY, before routes/middleware using req.ip
+app.set('trust proxy', 1); // Trust the first hop (common for Render, Heroku, etc.)
+// --- End Configuration ---
 
 // CORS
 app.use(cors({
@@ -57,30 +67,38 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
-app.use('/api/auth', authRouter);
-app.use('/api/user', userRouter);
-app.use('/api/seller', sellerRouter);
+app.use('/api/home', blockAccessMiddleware, statusRouter);
+app.use('/api/auth', blockAccessMiddleware, authRouter);
+app.use('/api/user', blockAccessMiddleware, userRouter);
+app.use('/api/seller', blockAccessMiddleware, sellerRouter);
+app.use('/api/apply', blockAccessMiddleware, sellerApplicationRouter);
+app.use('/api/product/listing',blockAccessMiddleware,productListingRouter); 
+app.use("/api/product-details",blockAccessMiddleware, productDetailsRouter);
+app.use('/api/stock', blockAccessMiddleware,stockRouter);
+app.use('/api/shows',blockAccessMiddleware, showsRouter);
+app.use('/api/shoppable-videos',blockAccessMiddleware, shoppableVideoRouter);
+app.use('/api/user-feed',blockAccessMiddleware, userFeedRouter);
+app.use('/api/aws',blockAccessMiddleware, awsFileUploadRouter);
+app.use('/api/azure',blockAccessMiddleware, azureFileUploadRouter);
+app.use('/api/profile',blockAccessMiddleware, profileRouter);
+app.use('/api/follow',blockAccessMiddleware, followRouter);
+app.use('/api/shipper',blockAccessMiddleware, shipperRouter);
+app.use('/api/videos',blockAccessMiddleware, videoRouter);
+app.use('/api/search',blockAccessMiddleware, globalSearchRouter);
+app.use('/api/notify', blockAccessMiddleware, notificationRouter);
+
+
+// --- 🔥 Admin Routes (without blocking middleware) ---
+// These routers are mounted *without* the blockAccessMiddleware
+app.use('/api/blocked-regions', blockedRegionRouter);
 app.use('/api/admin/seller-applications', adminSellerApplicationRouter);
 app.use('/api/admin/user', adminUserRouter);
 app.use('/api/partners/admin', adminPartnerRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/logs', adminLogsRouter);
 
-// routes based on new changes
-app.use('/api/apply', sellerApplicationRouter);
-app.use('/api/product/listing', productListingRouter); 
-app.use("/api/product-details", productDetailsRouter);
-app.use('/api/stock', stockRouter);
-app.use('/api/shows', showsRouter);
-app.use('/api/shoppable-videos', shoppableVideoRouter);
-app.use('/api/user-feed', userFeedRouter);
-app.use('/api/aws', awsFileUploadRouter);
-app.use('/api/azure', azureFileUploadRouter);
-app.use('/api/profile', profileRouter);
-app.use('/api/follow', followRouter);
-app.use('/api/shipper', shipperRouter);
-app.use('/api/videos', videoRouter);
-app.use('/api/search', globalSearchRouter);
+
 
 // General response
 app.use('/', (req, res) => {

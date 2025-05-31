@@ -5,6 +5,12 @@ import Seller from "./seller.model.js";
 
 const UserSchema = new mongoose.Schema(
   {
+    fcmTokens: [
+      {
+        type: String,
+        unique: true,
+      },
+    ],
     sellerInfo: { type: mongoose.Schema.Types.ObjectId, ref: "sellers" },
     dropshipperInfo: { type: mongoose.Schema.Types.ObjectId, ref: "dropshippers" },
     categories: { type: [String], default: [], maxLength: 100 },

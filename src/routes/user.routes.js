@@ -1,5 +1,5 @@
 import Express from 'express';
-import { getUserById, createUser, updateUser, deleteUser, getAllUsersAdmin, getUserByIdAdmin, toggleUserAccessAdmin } from '../controllers/user.controller.js';
+import { getUserById, createUser, updateUser, deleteUser, getAllUsersAdmin, getUserByIdAdmin, toggleUserAccessAdmin, updateFcmToken } from '../controllers/user.controller.js';
 import { userAuth } from '../middlewares/auth.js';
 import { addAddress, addCategories, deleteAddress, getAddressById, getAllAddresses, getCategories, updateAddress, updateCategories } from '../controllers/authentication.controller.js';
 import { getVerificationStatus, initiateAadhaarVerification, selectAddressForVerification, verifyAadhaarOTP } from '../controllers/verification.controller.js';
@@ -7,9 +7,10 @@ import { handleMandatePaymentCallback, initiateMandateSetupPayment } from '../co
 
 const userRouter = Express.Router();
 
+userRouter.post('/me/update-fcm-token', userAuth, updateFcmToken);
 userRouter.get("/id", userAuth, getUserById);
 
-//  Admin routes
+
 
 //  Create a new user from admin end
 userRouter.post("/admin/create", createUser);

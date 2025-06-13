@@ -78,17 +78,17 @@ export const USER_PUBLIC_FIELDS = [
 
 export const SELLER_PUBLIC_FIELDS = 'userInfo companyName email sellerType businessType sellerExperienceInfo productCategories wantToSell approvalStatus rejectedReason';
 
-const SHIPPER_INFO_FIELDS = 'businessName approvalStatus userInfo'; // Fields from Dropshipper doc
+const SHIPPER_INFO_FIELDS = 'businessName approvalStatus userInfo'; 
 
 export const PRODUCT_EXCLUDED_FIELDS = "-sellerId -productPrice -startingPrice -reservedPrice -createdAt -updatedAt -__v";
 
 export const PRODUCT_PUBLIC_FIELDS = "title description quantity images hsnNo productPrice weight sellerId MRP";
 
-export const USER_FEED_SHOWS_FIELDS = "language likes sellerId showStatus category subCategory tags thumbnailImageURL scheduledAt title previewVideoURL liveStreamId";
+export const USER_FEED_SHOWS_FIELDS = "language likes sellerId showStatus category subCategory tags thumbnailImage scheduledAt title previewVideo liveStreamId";
 
 export const USER_FEED_PRODUCTS_FIELDS = "sellerId title description quantity images category subcategory productPrice MRP";
 
-export const USER_FEED_SHOPPABLE_VIDEOS_FIELDS = "sellerId title description category subcategory thumbnailURL hlsMasterPlaylistUrl";
+export const USER_FEED_SHOPPABLE_VIDEOS_FIELDS = "host hostModal sellerId title description category subcategory thumbnailURL visiblity masterPlaylistKey";
 
 export const AGG_USER_FIELDS = {
   name: 1,
@@ -133,8 +133,8 @@ export const AGG_SHOWS_FIELDS = {
   tags: 1,
   title: 1,
   scheduledAt: 1,
-  thumbnailImageURL: 1,
-  previewVideoURL: 1,
+  thumbnailImage: 1,
+  previewVideo: 1,
   liveStreamId: 1
 };
 

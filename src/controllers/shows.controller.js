@@ -176,6 +176,8 @@ export const createShow = async (req, res) => {
     buyNowProducts = [], // Default to empty arrays
     auctionProducts = [],
     giveawayProducts = [],
+    coHost = null,
+    hasCoHost = false
   } = req.body;
 
   try {
@@ -216,10 +218,10 @@ export const createShow = async (req, res) => {
       category,
       subCategory,
       tags,
-      // === Use new host fields ===
       host: hostId,
       hostModel: showHostModel,
-      // ============================
+      coHost,
+      hasCoHost,
       thumbnailImage,
       thumbnailImageURL,
       previewVideoURL,

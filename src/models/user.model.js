@@ -81,7 +81,7 @@ const UserSchema = new mongoose.Schema(
         city: { type: String, trim: true, maxLength: 50, required: true },
         state: { type: String, trim: true, maxLength: 50, required: true },
         pincode: { type: String, maxLength: 6, trim: true, required: true },
-        addressType: { type: String, enum: ['home', 'work', 'other'], default: 'home' } // Optional
+        addressType: { type: String, enum: ['home', 'work', 'other'], default: 'home' } 
       },
     ],
     filledNewSellerForm: { type: Boolean, default: false },
@@ -94,13 +94,13 @@ const UserSchema = new mongoose.Schema(
     },
 
     // Aadhaar Verification
-    aadhaarNumberTransient: { type: String, select: false }, // Temp storage, not returned by default
+    aadhaarNumberTransient: { type: String, select: false }, 
     aadhaarNumberLast4: { type: String, trim: true, maxLength: 4 },
     isAadhaarVerified: { type: Boolean, default: false },
-    aadhaarApiReference: { type: String }, // e.g., AuthBridge transaction ID
+    aadhaarApiReference: { type: String }, 
     aadhaarVerificationDate: { type: Date },
-    aadhaarOTPReference: { type: String, select: false }, // Temporary for OTP session
-    aadhaarOTPExpiry: { type: Date, select: false },   // Temporary for OTP session
+    aadhaarOTPReference: { type: String, select: false }, 
+    aadhaarOTPExpiry: { type: Date, select: false }, 
 
     // Address Selection
     selectedAddressId: { type: mongoose.Schema.Types.ObjectId, default: null },
@@ -109,8 +109,8 @@ const UserSchema = new mongoose.Schema(
 
     // Payment Mandate Setup (Auto-Payment)
     payuMandate: {
-      mandateToken: { type: String, default: null },      // PayU's token for recurring debits
-      mandateId: { type: String, default: null },         // PayU's Mandate ID
+      mandateToken: { type: String, default: null },     
+      mandateId: { type: String, default: null },        
       bankReferenceNumber: { type: String, default: null },// Bank ref for the mandate setup transaction
       initialTransactionId: { type: String, default: null },// Your txnid for the mandate setup
       status: { type: String, enum: ['pending_confirmation', 'active', 'failed', 'cancelled', 'failed_hash_mismatch', 'failed_missing_token', 'failed_payu_status'], default: 'pending_confirmation' },

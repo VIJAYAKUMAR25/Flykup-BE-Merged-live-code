@@ -124,6 +124,59 @@ export const isDropshipper = async (req, res, next) => {
         res.status(500).json({ status: false, message: "Internal Server Error." });
     }
 };
+export const hostAuth = async ( req, res, next ) => {
+    try {
+        // 1) check token
+        const { accessToken } = req.cookies;
+        if ( !accessToken ){
+            return res.status(401).json( { status: false, message: 'unauthorized' });
+        }
+        // 2) verify
+        let payload;
+        try {
+            payload = jwt.verify(accessToken, jwt_secret);
+        } catch (error) {
+            return res.status(401).json({ status: false, message: `Unauthorized: ${error.message}`});
+        }
+
+        // fetch user & seller , dropshipper fields
+        const user = await User.findById(payload._id)
+            .populate('sellerInfo')
+            .populate('dropshipperInfo');
+
+        if( !user || !user.role ) {
+            return res.status(401).json( { status: false, message: "unauthorized" } );
+        }
+
+        // figure out hostId based on role 
+        let hostId, hostType, hostDoc;
+        if( user.role === 'seller' && user.sellerInfo ) {
+            hostId = user.sellerInfo._id;
+            hostType = 'seller';
+            hostDoc = user.sellerInfo;
+        } else if ( user.role === 'dropshipper' && user.dropshipperInfo ){
+            hostId = user.dropshipperInfo._id;
+            hostType = 'dropshipper';
+            hostDoc = user.dropshipperInfo;
+        } else {
+            return res.status(403).json({
+                status: false,
+                message: `Forbidden: no ${ user.role } profile found`
+            });
+        }
+
+        // attach to req
+        req.user = user;
+        req.hostId = hostId;
+        req.hostType = hostType;
+        req.hostDoc = hostDoc;
+
+        next();
+    } catch (error) {
+        console.error("hostAuth error:", error);
+        res.status(500).json({ status: false, message: "Internal Server Error" });
+    }
+}
 
 // --- CORRECTED Middleware: canHostShow ---
 // Checks if user is either an approved Seller or an approved Dropshipper

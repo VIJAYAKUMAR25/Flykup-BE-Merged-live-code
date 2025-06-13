@@ -1,16 +1,41 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
+// Define a schema for the co-host details
+const coHostDetailSchema = new Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "users", // Or your relevant user/seller model
+    required: true,
+  },
+  userName: {
+    type: String,
+    required: true,
+  },
+  role: {
+    type: String,
+    required: true,
+  },
+  profileURL: {
+    type: String,
+    default: null,
+  },
+  companyName: {
+    type: String,
+  },
+  sellerType: {
+    type: String,
+  },
+}, { _id: false }); // _id is not needed for this subdocument
+
 // Comment Schema
 const commentSchema = new Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "users", // Reference to the User model
-    // required: true,
   },
   text: {
     type: String,
-    // required: true,
   },
   timeStamp: {
     type: Date,
@@ -45,19 +70,14 @@ const auctionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // If referencing productlistings, add owner:
-    // productOwnerSellerId: { type: Schema.Types.ObjectId, ref: 'sellers', required: true },
     product: {
       type: String,
-      // required: true,
     },
     auctionType: {
       type: String, // 'default' or other types
-      // required: true,
     },
     startingBid: {
       type: Number,
-      // required: true,
     },
     increment: {
       type: Number,
@@ -88,7 +108,6 @@ const auctionSchema = new mongoose.Schema(
     bids: [bidSchema], // Array of bids
     endsAt: {
       type: Date,
-      // required: true,
     },
     isActive: {
       type: Boolean,
@@ -104,17 +123,24 @@ const auctionSchema = new mongoose.Schema(
 // Show Schema
 const showSchema = new Schema(
   {
-    host: { // New field for the host (Seller or Dropshipper)
+    host: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      refPath: 'hostModel' // Dynamic reference
+      refPath: 'hostModel'
     },
-    hostModel: { // New field to define the type of host
+    hostModel: {
       type: String,
       required: true,
-      enum: ['sellers', 'dropshippers'] // Allowed host types
+      enum: ['sellers', 'dropshippers']
     },
-    // === MODIFIED END: Host Information ===
+    hasCoHost: { 
+        type: Boolean,
+        default: false,
+    },
+    coHost: { 
+        type: coHostDetailSchema,
+        default: null,
+    },
     title: {
       type: String,
       required: true,
@@ -130,10 +156,6 @@ const showSchema = new Schema(
       type: String,
       default: "",
     },
-    // streamName: {
-    //   type: String,
-    //   default: "",
-    // },
     liveStreamId: {
       type: String,
       default: null
@@ -142,20 +164,11 @@ const showSchema = new Schema(
       type: [String],
       default: [],
     },
-
     thumbnailImage: {
-      type: String, // URL or file path
-      default: null,
-    },
-    previewVideo: {
       type: String,
       default: null,
     },
-    thumbnailImageURL: {
-      type: String, 
-      default: null,
-    },
-    previewVideoURL: {
+    previewVideo: {
       type: String,
       default: null,
     },
@@ -166,16 +179,12 @@ const showSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    // streamUrl: {
-    //   type: String, // URL for the live stream
-    //   default: null,
-    // },
     showStatus: {
       type: String,
       enum: ["created", "live", "cancelled", "ended"],
       default: "created",
     },
-    comments: [commentSchema], // Array of comments
+    comments: [commentSchema],
     likes: {
       type: Number,
       default: 0,
@@ -185,31 +194,26 @@ const showSchema = new Schema(
       ref: "users",
       default: [],
     },
-    // auctions: [auctionSchema], // Array of auctions
     currentAuction: auctionSchema,
-
-    // === MODIFIED START: Product Arrays ===
     buyNowProducts: {
       type: [
         {
           _id: false,
           productId: { type: Schema.Types.ObjectId, ref: "productlistings", required: true },
-          // --- ADDED productOwnerSellerId ---
           productOwnerSellerId: { type: Schema.Types.ObjectId, ref: 'sellers', required: true },
-          productPrice: { type: Number, min: 0, default: null }, // Price set by host for this show
+          productPrice: { type: Number, min: 0, default: null },
         },
       ],
       default: [],
     },
-    auctionProducts: { // Assuming these are pre-defined products for potential auctions
+    auctionProducts: {
       type: [
         {
           _id: false,
           productId: { type: Schema.Types.ObjectId, ref: "productlistings", required: true },
-          // --- ADDED productOwnerSellerId ---
           productOwnerSellerId: { type: Schema.Types.ObjectId, ref: 'sellers', required: true },
-          startingPrice: { type: Number, min: 0, default: null }, // Set by host
-          reservedPrice: { type: Number, min: 0, default: null }, // Optional, set by host
+          startingPrice: { type: Number, min: 0, default: null },
+          reservedPrice: { type: Number, min: 0, default: null },
         },
       ],
       default: [],
@@ -219,9 +223,8 @@ const showSchema = new Schema(
         {
           _id: false,
           productId: { type: Schema.Types.ObjectId, ref: "productlistings", required: true },
-          // --- ADDED productOwnerSellerId ---
           productOwnerSellerId: { type: Schema.Types.ObjectId, ref: 'sellers', required: true },
-          followersOnly: { type: Boolean, default: false }, // Set by host
+          followersOnly: { type: Boolean, default: false },
         },
       ],
       default: [],
@@ -230,24 +233,27 @@ const showSchema = new Schema(
       type: Boolean,
       default: false
     }
-    // === MODIFIED END: Product Arrays ===
   },
   { timestamps: true }
 );
 
-// Create and export the Show model
-const Show = mongoose.model("shows", showSchema);
-
 showSchema.pre('save', function (next) {
   const doc = this;
 
+  // Set liveDrop based on product types
   const hasBuyNow = doc.buyNowProducts && doc.buyNowProducts.length > 0;
   const hasAuction = doc.auctionProducts && doc.auctionProducts.length > 0;
   const hasGiveaway = doc.giveawayProducts && doc.giveawayProducts.length > 0;
-
   doc.liveDrop = hasBuyNow && hasAuction && hasGiveaway;
+
+  // Ensure coHost is null if hasCoHost is false
+  if (!doc.hasCoHost) {
+      doc.coHost = null;
+  }
 
   next();
 });
+
+const Show = mongoose.model("shows", showSchema);
 
 export default Show;

@@ -34,6 +34,7 @@ import blockedRegionRouter from './src/routes/blockedRegion.routes.js';
 import statusRouter from './src/routes/statusRouter.js';
 import adminLogsRouter from './src/routes/admin/adminLoginLog.routes.js';
 import notificationRouter from './src/routes/notification.routes.js';
+import coHostRouter from './src/routes/coHost.routes.js';
 
 
 // Initialize Express app and HTTP server
@@ -86,7 +87,7 @@ app.use('/api/shipper',blockAccessMiddleware, shipperRouter);
 app.use('/api/videos',blockAccessMiddleware, videoRouter);
 app.use('/api/search',blockAccessMiddleware, globalSearchRouter);
 app.use('/api/notify', blockAccessMiddleware, notificationRouter);
-
+app.use('/api/cohost',blockAccessMiddleware, coHostRouter);
 
 // --- 🔥 Admin Routes (without blocking middleware) ---
 // These routers are mounted *without* the blockAccessMiddleware

@@ -300,6 +300,7 @@ export const getUserById = async (req, res) => {
 // multiple fcm token per user
 export const updateFcmToken = async ( req, res ) => {
   const { fcmToken } = req.body;
+  console.log('fcmToken:', fcmToken);
   const userId = req.user?._id;
 
   if(!fcmToken){

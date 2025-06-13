@@ -60,7 +60,8 @@ app.use(cors({
     "https://flykup-merge.vercel.app",
     "https://flykup-fe-merged-live-demo.vercel.app",
     "https://flykup-digi-store.vercel.app",
-    "http://13.127.105.190:5070"
+    "http://13.127.105.190:5070",
+
   ],
   credentials: true
 }));

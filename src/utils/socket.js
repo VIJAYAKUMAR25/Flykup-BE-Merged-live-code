@@ -17,6 +17,7 @@ export const initializeSocket = (server) => {
                 "http://localhost:5174",
                 "https://app.flykup.live",
                 "https://admin.flykup.live",
+                "https://flykup-fe-merged-live-demo.vercel.app",
                
             ],
             credentials: true,

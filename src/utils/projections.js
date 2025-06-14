@@ -28,6 +28,8 @@ export const videoProjection = {
     _id: 1,
     title: { $ifNull: ["$title", null] },
     thumbnailURL: { $ifNull: ["$thumbnailURL", null] },
+        
+thumbnailBlobName: { $ifNull: ["$thumbnailBlobName", null] },
     visibility: { $ifNull: ["$visibility", null] },
     createdAt: { $ifNull: ["$createdAt", null] },
     hlsMasterPlaylistUrl: { $ifNull: ["$hlsMasterPlaylistUrl", null] },
@@ -54,7 +56,7 @@ export const videoProjection = {
         $ifNull: ["$userDetails.userName", null]
     },
     sellerProfileURL: { // Represents the host's profile URL
-        $ifNull: ["$userDetails.profileURL.azureUrl", null] 
+        $ifNull: ["$userDetails.profileURL.key", null] 
     },
 
     // --- IMPORTANT: Keep intermediate fields needed above ---
@@ -67,7 +69,7 @@ export const videoProjection = {
 export const showProjection = {
     _id: 1,
     title: { $ifNull: ["$title", null] },
-    thumbnailImageURL: { $ifNull: ["$thumbnailImageURL", null] },
+    thumbnailImage: { $ifNull: ["$thumbnailImage", null] },
     previewVideoURL: { $ifNull: ["$previewVideoURL", null] },
     isLive: { $ifNull: ["$isLive", false] },
     showStatus: { $ifNull: ["$showStatus", null] },
@@ -97,7 +99,7 @@ export const showProjection = {
         $ifNull: ["$userDetails.userName", null]
     },
     sellerProfileURL: { // Represents the host's profile URL
-        $ifNull: ["$userDetails.profileURL.azureUrl", null] 
+        $ifNull: ["$userDetails.profileURL.key", null] 
     },
 
     // --- IMPORTANT: Keep intermediate fields needed above ---

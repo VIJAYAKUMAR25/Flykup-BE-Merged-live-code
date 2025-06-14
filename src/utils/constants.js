@@ -1,10 +1,16 @@
 const isProd = process.env.NODE_ENV === 'production';
 
+// export const COOKIE_OPTIONS = {
+//     httpOnly: true,
+//     sameSite: isProd ? "none" : "lax",
+//     secure: isProd
+// }
+
 export const COOKIE_OPTIONS = {
-    httpOnly: true,
-    sameSite: isProd ? "none" : "lax",
-    secure: isProd
-}
+  httpOnly: true,
+  sameSite: "None",
+  secure: true
+};
 
 export const RESERVED_USERNAMES = [
   // System / core

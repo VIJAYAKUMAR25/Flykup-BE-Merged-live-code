@@ -1,16 +1,18 @@
 const isProd = process.env.NODE_ENV === 'production';
 
+export const COOKIE_OPTIONS = {
+    httpOnly: true,
+    sameSite: isProd ? "none" : "lax",
+    secure: isProd
+}
+
 // export const COOKIE_OPTIONS = {
 //     httpOnly: true,
-//     sameSite: isProd ? "none" : "lax",
-//     secure: isProd
+//     sameSite: "none",
+//     secure: true,
+//     domain : '.onrender.com',
+//     path : '/'
 // }
-
-export const COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: "None",
-  secure: true
-};
 
 export const RESERVED_USERNAMES = [
   // System / core

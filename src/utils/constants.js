@@ -7,10 +7,12 @@ const isProd = process.env.NODE_ENV === 'production';
 // }
 
 export const COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: "None",
-  secure: true
-};
+    httpOnly: true,
+    sameSite: "none",
+    secure: true,
+    domain : '.onrender.com',
+    path : '/'
+}
 
 export const RESERVED_USERNAMES = [
   // System / core

@@ -165,6 +165,7 @@ export const AGG_SHOPPABLE_VIDEOS_FIELDS = {
   category: 1,
   subcategory: 1,
   thumbnailURL: 1,
+  thumbnailBlobName: 1,
   hlsMasterPlaylistUrl: 1
 };
 

@@ -567,13 +567,14 @@ export const hostAuth = async (req, res, next) => {
         res.status(500).json({ status: false, message: "Internal Server Error" });
     }
 }
-
-
 export const canHostShow = async (req, res, next) => {
     try {
+        console.log("canHostShow middleware started.");
+
         // First, ensure user is authenticated (using your existing 'protect' logic)
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            console.log("DEBUG: No token provided or invalid format.");
             return res.status(401).json({ status: false, message: "Unauthorized: No token provided." });
         }
 
@@ -581,28 +582,48 @@ export const canHostShow = async (req, res, next) => {
         let decoded;
         try {
             decoded = jwt.verify(accessToken, jwt_secret);
+            console.log("DEBUG: Token decoded successfully. User ID:", decoded._id);
         } catch (err) {
+            console.log("DEBUG: Token verification failed.", err.message);
             return res.status(401).json({ status: false, message: `Unauthorized: ${err.message || 'Invalid token.'}` });
         }
+        
         const user = await User.findById(decoded._id);
         if (!user) {
+            console.log("DEBUG: User not found for ID:", decoded._id);
             return res.status(401).json({ status: false, message: "Unauthorized: User not found." });
         }
+        
         req.user = user; // Attach user for consistency
+        console.log("DEBUG: User found. Role:", user.role);
 
         // Now check if they are an approved Seller or Dropshipper
         if (user.role === 'seller' && user.sellerInfo) {
+            console.log("DEBUG: User is a seller with sellerInfo. Checking approval status...");
             const seller = await Seller.findById(user.sellerInfo);
-            if (seller && seller.approvalStatus === 'approved') {
-                // === FIX: Use req.showHost instead of req.host ===
+            
+            if (seller) {
+                console.log("DEBUG: Seller found. Approval status:", seller.approvalStatus);
+            } else {
+                console.log("DEBUG: Seller document not found for sellerInfo:", user.sellerInfo);
+            }
+
+            // Check if seller is 'approved' OR 'auto_approved'
+            if (seller && (seller.approvalStatus === 'approved' || seller.approvalStatus === 'auto_approved')) {
                 req.showHost = seller; // Attach the seller document
                 req.showHostModel = 'sellers';
-                // ==================================================
+                console.log("DEBUG: Seller is approved (or auto-approved). Calling next().");
                 return next(); // Allowed as Seller
+            } else {
+                console.log("DEBUG: Seller not approved or seller document missing.");
             }
+        } else if (user.role === 'seller' && !user.sellerInfo) {
+            console.log("DEBUG: User is a seller but sellerInfo is missing.");
         }
 
+
         if (user.role === 'dropshipper' && user.dropshipperInfo) {
+            console.log("DEBUG: User is a dropshipper with dropshipperInfo. Checking approval status...");
             // Populate connected seller IDs needed for validation later
             const dropshipper = await Dropshipper.findById(user.dropshipperInfo)
                 .populate({
@@ -611,21 +632,31 @@ export const canHostShow = async (req, res, next) => {
                     select: 'sellerId -_id' // Select only the sellerId from approved connections
                 });
 
-            if (dropshipper && dropshipper.approvalStatus === 'approved') {
+            if (dropshipper) {
+                console.log("DEBUG: Dropshipper found. Approval status:", dropshipper.approvalStatus);
+            } else {
+                console.log("DEBUG: Dropshipper document not found for dropshipperInfo:", user.dropshipperInfo);
+            }
+
+            // Check if dropshipper is 'approved' OR 'auto_approved'
+            if (dropshipper && (dropshipper.approvalStatus === 'approved' || dropshipper.approvalStatus === 'auto_approved')) {
                 // Pre-process connected seller IDs for faster lookup later
-                // Ensure connectedSellers is an array even if populate returns null/empty
                 const approvedConnections = dropshipper.connectedSellers || [];
                 dropshipper.approvedSellerIds = approvedConnections.map(conn => conn.sellerId); // Store just the IDs
 
-                // === FIX: Use req.showHost instead of req.host ===
                 req.showHost = dropshipper; // Attach the dropshipper document
                 req.showHostModel = 'dropshippers';
-                // ==================================================
+                console.log("DEBUG: Dropshipper is approved (or auto-approved). Calling next().");
                 return next(); // Allowed as Dropshipper
+            } else {
+                console.log("DEBUG: Dropshipper not approved or dropshipper document missing.");
             }
+        } else if (user.role === 'dropshipper' && !user.dropshipperInfo) {
+            console.log("DEBUG: User is a dropshipper but dropshipperInfo is missing.");
         }
 
         // If neither role is valid or approved
+        console.log("DEBUG: User is neither an approved Seller nor an approved Dropshipper. Returning 403.");
         return res.status(403).json({ status: false, message: "Forbidden: User must be an approved Seller or Dropshipper to host shows." });
 
     } catch (error) {
@@ -633,6 +664,71 @@ export const canHostShow = async (req, res, next) => {
         res.status(500).json({ status: false, message: "Internal Server Error." });
     }
 };
+
+// export const canHostShow = async (req, res, next) => {
+//     try {
+//         // First, ensure user is authenticated (using your existing 'protect' logic)
+//         const authHeader = req.headers.authorization;
+//         if (!authHeader || !authHeader.startsWith('Bearer ')) {
+//             return res.status(401).json({ status: false, message: "Unauthorized: No token provided." });
+//         }
+
+//         const accessToken = authHeader.split(' ')[1];
+//         let decoded;
+//         try {
+//             decoded = jwt.verify(accessToken, jwt_secret);
+//         } catch (err) {
+//             return res.status(401).json({ status: false, message: `Unauthorized: ${err.message || 'Invalid token.'}` });
+//         }
+//         const user = await User.findById(decoded._id);
+//         if (!user) {
+//             return res.status(401).json({ status: false, message: "Unauthorized: User not found." });
+//         }
+//         req.user = user; // Attach user for consistency
+
+//         // Now check if they are an approved Seller or Dropshipper
+//         if (user.role === 'seller' && user.sellerInfo) {
+//             const seller = await Seller.findById(user.sellerInfo);
+//             if (seller && seller.approvalStatus === 'approved') {
+//                 // === FIX: Use req.showHost instead of req.host ===
+//                 req.showHost = seller; // Attach the seller document
+//                 req.showHostModel = 'sellers';
+//                 // ==================================================
+//                 return next(); // Allowed as Seller
+//             }
+//         }
+
+//         if (user.role === 'dropshipper' && user.dropshipperInfo) {
+//             // Populate connected seller IDs needed for validation later
+//             const dropshipper = await Dropshipper.findById(user.dropshipperInfo)
+//                 .populate({
+//                     path: 'connectedSellers',
+//                     match: { status: 'approved' }, // Only populate approved connections
+//                     select: 'sellerId -_id' // Select only the sellerId from approved connections
+//                 });
+
+//             if (dropshipper && dropshipper.approvalStatus === 'approved') {
+//                 // Pre-process connected seller IDs for faster lookup later
+//                 // Ensure connectedSellers is an array even if populate returns null/empty
+//                 const approvedConnections = dropshipper.connectedSellers || [];
+//                 dropshipper.approvedSellerIds = approvedConnections.map(conn => conn.sellerId); // Store just the IDs
+
+//                 // === FIX: Use req.showHost instead of req.host ===
+//                 req.showHost = dropshipper; // Attach the dropshipper document
+//                 req.showHostModel = 'dropshippers';
+//                 // ==================================================
+//                 return next(); // Allowed as Dropshipper
+//             }
+//         }
+
+//         // If neither role is valid or approved
+//         return res.status(403).json({ status: false, message: "Forbidden: User must be an approved Seller or Dropshipper to host shows." });
+
+//     } catch (error) {
+//         console.error("Error in canHostShow middleware:", error);
+//         res.status(500).json({ status: false, message: "Internal Server Error." });
+//     }
+// };
 
 // --- CORRECTED Middleware: isHost ---
 // Checks if the authenticated user's ID matches the 'userInfo' field of the host (Seller/Dropshipper) of the specific show requested via req.params.id

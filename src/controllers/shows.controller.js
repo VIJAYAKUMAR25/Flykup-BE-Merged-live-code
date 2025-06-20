@@ -154,8 +154,9 @@ export const createShow = async (req, res) => {
   // === FIX: Read from req.showHost and req.showHostModel ===
   const { showHost, showHostModel } = req;
   // =======================================================
-
-  // Check if host was actually attached (should be if middleware succeeded)
+console.log("Received showHost:", showHost);
+console.log("Received showHostModel:", showHostModel); 
+console.log("Request body:", req.body);
   if (!showHost || !showHostModel) {
     console.error("Error: Host details not attached by canHostShow middleware.");
     return res.status(500).json({ status: false, message: "Internal Server Error: Middleware configuration issue." });

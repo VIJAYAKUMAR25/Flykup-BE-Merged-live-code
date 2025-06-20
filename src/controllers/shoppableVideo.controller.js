@@ -80,7 +80,7 @@ export const createShoppableVideo = async (req, res) => {
     const hostId = showHost._id;
     const data = req.body;
     const { productsListed = [], ...otherData } = data; // Separate products for validation
-
+  
     try {
         // --- Add Product Validation ---
         const productValidation = await validateVideoProducts(productsListed, showHost, showHostModel);

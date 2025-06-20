@@ -409,6 +409,47 @@ export const sellerAuth = async (req, res, next) => {
     }
 }
 
+export const optionalAuth = async (req, res, next) => {
+    try {
+        // 1. Check for the Authorization header
+        const authHeader = req.headers.authorization;
+
+        // 2. If a Bearer token exists, try to process it
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const accessToken = authHeader.split(' ')[1];
+            
+            try {
+                // 3. Verify the token
+                const decoded = jwt.verify(accessToken, jwt_secret);
+                
+                // 4. Find the user based on the token's ID
+                const user = await User.findById(decoded._id);
+
+                // 5. If a valid user is found, attach them to the request object
+                if (user) {
+                    req.user = user;
+                }
+                // If user is not found, we simply proceed without attaching req.user
+
+            } catch (error) {
+                // This catch block handles an invalid/expired token.
+                // Instead of sending an error, we just log it and proceed.
+                // The request will continue as if the user is a guest.
+                console.log("Optional auth notice: Invalid token provided. Proceeding as guest.", error.message);
+            }
+        }
+        
+        // 6. CRITICAL STEP: Always proceed to the next middleware/controller.
+        // This is what makes the route public, as we don't return an error on auth failure.
+        next();
+
+    } catch (error) {
+        // This outer catch is for unexpected server errors (e.g., database connection issue)
+        console.error("Critical error in optionalAuth middleware:", error);
+        res.status(500).json({ status: false, message: "Internal Server Error" });
+    }
+};
+
 export const isDropshipper = async (req, res, next) => {
     try {
         // 1. Get token from Authorization header
@@ -527,9 +568,6 @@ export const hostAuth = async (req, res, next) => {
     }
 }
 
-// --- CORRECTED Middleware: canHostShow ---
-// Checks if user is either an approved Seller or an approved Dropshipper
-// Attaches req.showHost (the Seller or Dropshipper document) and req.showHostModel ('sellers' or 'dropshippers')
 
 export const canHostShow = async (req, res, next) => {
     try {

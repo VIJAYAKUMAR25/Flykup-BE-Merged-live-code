@@ -422,6 +422,7 @@ export const updateVideoVisibility = async (req, res) => {
 // UPLOADING STATUS GETTING IN SOCKET
 
 export const getShoppableVideoDetailsForStatus = async (videoId) => {
+    console.log(`Fetching shoppable video details for status (ID: ${videoId})`);
   try {
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
       return { error: 'Invalid video ID format', status: 400, data: null };
@@ -446,6 +447,7 @@ export const getShoppableVideoDetailsForStatus = async (videoId) => {
 
 
 export const handleVideoProcessingUpdate = async (req, res) => {
+    console.log("Received Video Processing Update:", req.body);
     const {
         videoId,
         optimizationStatus,
@@ -457,7 +459,7 @@ export const handleVideoProcessingUpdate = async (req, res) => {
         durationTook,
         masterPlaylistKey,
     } = req.body;
-
+console.log("Received Video Processing Update:", req.body);
     try {
         const videoToUpdate = await ShoppableVideo.findOne({ videoId });
 

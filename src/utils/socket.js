@@ -18,7 +18,7 @@ export const initializeSocket = (server) => {
                 "https://app.flykup.live",
                 "https://admin.flykup.live",
                 "https://flykup-fe-merged-new-3.vercel.app",
-               
+                "https://flykup-demo.vercel.app",
             ],
             credentials: true,
             methods: ["GET", "POST"], 
@@ -30,7 +30,7 @@ export const initializeSocket = (server) => {
     globalIOInstance = io; 
 
     io.on('connection', async (socket) => {
-        console.log(chalk.blue(`[Socket.IO] Client connected: ${socket.id}`));
+       
 
         // Optional: User identification (keep if you need to know which user is connected)
         const { userId } = socket.handshake.auth || {}; // Assuming userId is passed in handshake auth
@@ -52,8 +52,6 @@ export const initializeSocket = (server) => {
                 }
                 return;
             }
-
-            console.log(chalk.cyan(`[Socket.IO] Client ${socket.id} requested status for ShoppableVideo ID: ${videoId}`));
             const result = await getShoppableVideoDetailsForStatus(videoId);
 
             if (result.error) {
@@ -67,13 +65,11 @@ export const initializeSocket = (server) => {
                 }
                 // Emit to the requesting client
                 socket.emit('shoppableVideoStatusUpdate', { videoId, statusDetails: result.data });
-                console.log(chalk.green(`[Socket.IO] Sent status for ShoppableVideo ${videoId} to ${socket.id}: ${result.data.processingStatus}`));
 
                 // If the video is still processing, automatically subscribe the user to the room for updates
                 if (result.data && ( result.data.processingStatus === 'processing' || result.data.processingStatus === 'failed'|| result.data.processingStatus === 'uploaded')) {
                     const roomName = `shoppable-video-${videoId}`;
                     socket.join(roomName);
-                    console.log(chalk.magenta(`[Socket.IO] Client ${socket.id} auto-joined room ${roomName} for live updates on video ${videoId}`));
                 }
             }
         });
@@ -87,7 +83,7 @@ export const initializeSocket = (server) => {
             }
             const roomName = `shoppable-video-${videoId}`;
             socket.join(roomName);
-            console.log(chalk.magenta(`[Socket.IO] Client ${socket.id} subscribed to room: ${roomName} for ShoppableVideo ${videoId}`));
+          
 
             // Optionally, send current status upon subscription
             const result = await getShoppableVideoDetailsForStatus(videoId);
@@ -108,21 +104,19 @@ export const initializeSocket = (server) => {
             }
             const roomName = `shoppable-video-${videoId}`;
             socket.leave(roomName);
-            console.log(chalk.magenta(`[Socket.IO] Client ${socket.id} unsubscribed from room: ${roomName} for ShoppableVideo ${videoId}`));
             if (typeof callback === 'function') callback({ success: true, message: `Unsubscribed from updates for video ${videoId}.` });
         });
 
         // --- END: Shoppable Video Status Event Handlers ---
 
         socket.on('disconnect', async () => {
-            console.log(chalk.red(`[Socket.IO] Client disconnected: ${socket.id}`));
             // Optional: Clear user's socketId if you implemented that
             const disconnectedUserId = socket.data.userId;
             if (disconnectedUserId) {
                 try {
                     // Example: Update User model to remove socketId or set to null
                     await User.findByIdAndUpdate(disconnectedUserId, { $unset: { socketId: "" } });
-                    console.log(chalk.green(`[Socket.IO] Cleared socketId for disconnected user ${disconnectedUserId}`));
+                 
                 } catch (err) {
                     console.error(chalk.red(`[Socket.IO] Error clearing socketId for user ${disconnectedUserId}: ${err.message}`));
                 }
@@ -150,8 +144,6 @@ export const broadcastShoppableVideoStatusChange = (videoId, updatedVideoDetails
         videoId,
         statusDetails: updatedVideoDetails 
     });
-
-    console.log(chalk.blueBright(`[Socket.IO Broadcast] Emitted shoppableVideoStatusUpdate to room ${roomName} for video ${videoId}. New status: ${updatedVideoDetails.processingStatus}`));
 };
 
 // If your main index.js imports this as default, use:

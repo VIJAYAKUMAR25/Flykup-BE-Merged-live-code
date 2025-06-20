@@ -134,7 +134,7 @@ export const getProductBySellerId = async (req, res) => {
       });
   } catch (error) {
     console.error("Error in getProductBySellerId:", error.message);
-    res.status(500).json({ status: false, message: "Internal server Error." });
+    res.status(500).json({ status: false, message: error.message || "Internal server Error." });
   }
 };
 

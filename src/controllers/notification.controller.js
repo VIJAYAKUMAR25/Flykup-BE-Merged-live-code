@@ -38,28 +38,52 @@ import {
 
 // Save and send a single notification
 
-export const createNotification = async ({ fromUser, toUser, type, title, message, cutMessage, link = null, file = null, actions = [] }) => {
-  const notification = await Notification.create({
-    fromUser,
-    toUser,
-    type,
-    title,
-    message,
-    cutMessage,
-    link,
-    file,
-    actions,
-  });
-  // send notification to user
-  console.log("Sending notification to user:", toUser);
+// export const createNotification = async ({ fromUser, toUser, type, title, message, cutMessage, link = null, file = null, actions = [] }) => {
+//   const notification = await Notification.create({
+//     fromUser,
+//     toUser,
+//     type,
+//     title,
+//     message,
+//     cutMessage,
+//     link,
+//     file,
+//     actions,
+//   });
+//   // send notification to user
+//   console.log("Sending notification to user:", toUser);
   
-  const user = await User.findById(toUser);
-  if (user?.fcmTokens) {  //fcmTokens
-    await sendMulticastNotification(user.fcmTokens, title, message, { type });
-  }
+//   const user = await User.findById(toUser);
+//   if (user?.fcmTokens) {  //fcmTokens
+//     await sendMulticastNotification(user.fcmTokens, title, message, { type });
+//   }
 
-  return notification;
+//   return notification;
+// };
+
+export const createNotification = async (notificationData) => {
+  try {
+    const { toUser, type, title, message, cutMessage, link } = notificationData;
+    
+    // Create notification
+    const notification = new Notification({
+      toUser,
+      type,
+      title,
+      message,
+      cutMessage: cutMessage || message.substring(0, 100),
+      link: link || null,
+      status: 'unread'
+    });
+    
+    await notification.save();
+    return notification;
+  } catch (error) {
+    console.error("Notification creation failed:", error);
+    throw error; // Rethrow to handle in calling function
+  }
 };
+
 
 // Save and send multiple notifications
 export const createBulkNotification = async (notificationsData = []) => {

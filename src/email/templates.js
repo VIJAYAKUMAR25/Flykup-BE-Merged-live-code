@@ -9,7 +9,7 @@ export const OTP_EMAIL = `
 <body style="color:#333; font-family:Arial, sans-serif; margin:0 auto; overflow-x:hidden; padding:16px; background-color:#f9f9f9; max-width:600px" bgcolor="#f9f9f9">
   
   <div class="header" style="background-color:#2c2c2c; border-top-left-radius:8px; border-top-right-radius:8px; padding:24px; text-align:center" bgcolor="#2c2c2c" align="center">
-    <img src="https://res.cloudinary.com/dxsdme4qy/image/upload/v1738684489/Logo-Flikup_lxsqbw.png" alt="Flykup Logo" style="height: 40px;">
+    <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height: 40px;">
   </div>
  
   <div class="content" style="background-color:white; border-bottom-left-radius:8px; border-bottom-right-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1); padding:24px" bgcolor="white">
@@ -54,7 +54,7 @@ export const FORGOT_PASSWORD_OTP_EMAIL = `
 <body style="color:#333; font-family:Arial, sans-serif; margin:0 auto; overflow-x:hidden; padding:16px; background-color:#f9f9f9; max-width:600px" bgcolor="#f9f9f9">
   
   <div class="header" style="background-color:#2c2c2c; border-top-left-radius:8px; border-top-right-radius:8px; padding:24px; text-align:center" bgcolor="#2c2c2c" align="center">
-    <img src="https://res.cloudinary.com/dxsdme4qy/image/upload/v1738684489/Logo-Flikup_lxsqbw.png" alt="Flykup Logo" style="height: 40px;">
+    <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height: 40px;">
   </div>
  
   <div class="content" style="background-color:white; border-bottom-left-radius:8px; border-bottom-right-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1); padding:24px" bgcolor="white">
@@ -99,7 +99,7 @@ export const WELCOME_EMAIL = `
 <body style="color:#333; font-family:Arial, sans-serif; line-height:1.6; margin:0; overflow-x:hidden; padding:0">
   <div class="container" style="background-color:#f9f9f9; margin:0 auto; max-width:600px; padding:16px" bgcolor="#f9f9f9">
     <div class="header" style="background-color:#2c2c2c; border-top-left-radius:8px; border-top-right-radius:8px; padding:24px; text-align:center" bgcolor="#2c2c2c" align="center">
-      <img src="https://res.cloudinary.com/dxsdme4qy/image/upload/v1738684489/Logo-Flikup_lxsqbw.png" alt="Flykup Logo" style="height: 40px;">
+      <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height: 40px;">
     </div>
     
     <div class="content" style="background-color:white; border-bottom-left-radius:8px; border-bottom-right-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1); padding:24px" bgcolor="white">
@@ -146,7 +146,7 @@ export const PASSWORD_RESET_SUCCESS = `
 <body style="color:#333; font-family:Arial, sans-serif; line-height:1.6; margin:0; overflow-x:hidden; padding:0">
   <div class="container" style="background-color:#f9f9f9; margin:0 auto; max-width:600px; padding:16px" bgcolor="#f9f9f9">
     <div class="header" style="background-color:#2c2c2c; border-top-left-radius:8px; border-top-right-radius:8px; padding:24px; text-align:center" bgcolor="#2c2c2c" align="center">
-      <img src="https://res.cloudinary.com/dxsdme4qy/image/upload/v1738684489/Logo-Flikup_lxsqbw.png" alt="Flykup Logo" style="height: 40px;">
+      <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height: 40px;">
     </div>
     
     <div class="content" style="background-color:white; border-bottom-left-radius:8px; border-bottom-right-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1); padding:24px" bgcolor="white">
@@ -187,7 +187,7 @@ export const RECEIVED_SELLER_APPLICATION = `
 <body style="color:#333; font-family:Arial, sans-serif; line-height:1.6; margin:0; overflow-x:hidden; padding:0">
   <div class="container" style="background-color:#f9f9f9; margin:0 auto; max-width:600px; padding:16px" bgcolor="#f9f9f9">
     <div class="header" style="background-color:#2c2c2c; border-top-left-radius:8px; border-top-right-radius:8px; padding:24px; text-align:center" bgcolor="#2c2c2c" align="center">
-      <img src="https://res.cloudinary.com/dxsdme4qy/image/upload/v1738684489/Logo-Flikup_lxsqbw.png" alt="Flykup Logo" style="height: 40px;">
+      <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height: 40px;">
     </div>
     
     <div class="content" style="background-color:white; border-bottom-left-radius:8px; border-bottom-right-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1); padding:24px" bgcolor="white">
@@ -220,43 +220,40 @@ export const RECEIVED_SELLER_APPLICATION = `
 
 export const APPLICATION_ACCEPTED = `
 <!DOCTYPE html>
-<html lang="en" style="color:#333; font-family:Arial, sans-serif; line-height:1.6; margin:0; overflow-x:hidden; padding:0">
+<html lang="en" style="color:#333; font-family:Arial, sans-serif; margin:0; padding:0;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Congratulations! Your Seller Application is Approved</title>
 </head>
-<body style="color:#333; font-family:Arial, sans-serif; line-height:1.6; margin:0; overflow-x:hidden; padding:0">
-  <div class="container" style="background-color:#f9f9f9; margin:0 auto; max-width:600px; padding:16px" bgcolor="#f9f9f9">
-    <div class="header" style="background-color:#2c2c2c; border-top-left-radius:8px; border-top-right-radius:8px; padding:24px; text-align:center" bgcolor="#2c2c2c" align="center">
-      <img src="https://res.cloudinary.com/dxsdme4qy/image/upload/v1738684489/Logo-Flikup_lxsqbw.png" alt="Flykup Logo" style="height: 40px;">
+<body style="margin:0; padding:16px; background-color:#f9f9f9; font-family:Arial, sans-serif;">
+  <div style="max-width:600px; margin:0 auto; background-color:white; border-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1);">
+    <div style="background-color:#2c2c2c; padding:24px; text-align:center; border-top-left-radius:8px; border-top-right-radius:8px;">
+      <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height:40px;">
     </div>
-    
-    <div class="content" style="background-color:white; border-bottom-left-radius:8px; border-bottom-right-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1); padding:24px" bgcolor="white">
-      <div class="title" style="color:#333; font-size:17px; font-weight:bold; margin-bottom:16px">Congratulations, {userName}!</div>
-      <p class="message" style="color:#4c4a4a; font-size:16px; margin-bottom:24px">
-        We’re excited to inform you that your seller application has been <span style="font-weight: 600;">approved.</span> <br/> 
-        Welcome aboard—you're now part of the <span style="font-weight: 600;">Flykup seller community.</span>
+    <div style="padding:24px; color:#333;">
+      <h1 style="font-size:20px; font-weight:bold; margin:0 0 16px;">Congratulations, {userName}!</h1>
+      <p style="font-size:16px; line-height:1.6;">
+        We are thrilled to inform you that your seller application has been <strong>approved</strong>. Welcome to the Flykup seller community!
       </p>
-      
-      <p style="font-size: 15px; margin-bottom: 12px;">
-        Get ready to showcase your products, engage with buyers, and grow your business through shoppable videos. We wish you great success on this journey!
+      <p style="font-size:16px; line-height:1.6;">
+        You can now log in to your account and start showcasing your products to a wider audience through shoppable videos.
       </p>
-      
-      <p style="font-size: 14px; margin-bottom: 8px;">
-        If you need any assistance, feel free to reach out. We’re here to help you every step of the way.
-      </p>
-      
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px;">
-        <p style="font-size: 12px; color: #333; margin: 0;">
-          Best regards,<br>
-          <span style="color:#333; font-size:14px; font-weight:bold">Flykup</span>
-        </p>
+      <div style="text-align:center; margin:24px 0;">
+        <a href="https://app.flykup.live" target="_blank" rel="noopener noreferrer" style="background-color:#2c2c2c; color:#FFD700; font-size:16px; font-weight:600; padding:12px 24px; border-radius:4px; text-decoration:none;">
+          Go to Your Dashboard
+        </a>
       </div>
+      <p style="font-size:14px; line-height:1.6;">
+        If you have any questions, feel free to contact our support team. We're here to help you succeed.
+      </p>
+      <p style="font-size:14px; color:#333; margin-top:24px; margin-bottom:0;">
+        Best regards,<br>
+        <span style="font-weight:bold;">The Flykup Team</span>
+      </p>
     </div>
-
-    <div class="footer" style="color:#757575; font-size:12px; margin-top:24px; text-align:center" align="center">
-      <p style="margin: 0;">This is an automated message, please do not reply to this email.</p>
+    <div style="color:#757575; font-size:12px; text-align:center; padding:16px;">
+      <p style="margin:0;">This is an automated message. Please do not reply to this email.</p>
     </div>
   </div>
 </body>
@@ -266,31 +263,77 @@ export const APPLICATION_ACCEPTED = `
 
 export const APPLICATION_REJECTED = `
 <!DOCTYPE html>
-<html lang="en" style="color:#333; font-family:Arial, sans-serif; line-height:1.6; margin:0; overflow-x:hidden; padding:0">
+<html lang="en" style="color:#333; font-family:Arial, sans-serif; margin:0; padding:0;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Seller Application Status</title>
+  <title>Update on Your Seller Application</title>
 </head>
-<body style="color:#333; font-family:Arial, sans-serif; line-height:1.6; margin:0; overflow-x:hidden; padding:0">
-  <div class="container" style="background-color:#f9f9f9; margin:0 auto; max-width:600px; padding:16px" bgcolor="#f9f9f9">
-    <div class="header" style="background-color:#2c2c2c; padding:24px; text-align:center">
-      <img src="https://res.cloudinary.com/dxsdme4qy/image/upload/v1738684489/Logo-Flikup_lxsqbw.png" alt="Flykup Logo" style="height: 40px;">
+<body style="margin:0; padding:16px; background-color:#f9f9f9; font-family:Arial, sans-serif;">
+  <div style="max-width:600px; margin:0 auto; background-color:white; border-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1);">
+    <div style="background-color:#2c2c2c; padding:24px; text-align:center; border-top-left-radius:8px; border-top-right-radius:8px;">
+      <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height:40px;">
     </div>
-    
-    <div class="content" style="background-color:white; padding:24px">
-      <div class="title" style="font-size:17px; font-weight:bold; margin-bottom:16px">Your Seller Application Status</div>
-      <p class="message" style="font-size:16px; margin-bottom:24px">
-        <span style="font-weight: 600;">Hello {userName},</span> unfortunately, your seller application has been rejected for the following reason:
+    <div style="padding:24px; color:#333;">
+      <h1 style="font-size:20px; font-weight:bold; margin:0 0 16px;">Update on Your Seller Application</h1>
+      <p style="font-size:16px; line-height:1.6;">
+        Hello {userName},
       </p>
-      
-      <p style="font-weight: bold; font-size: 16px; color: #D9534F;">{rejectedReason}</p>
-      
-      <p style="font-size: 14px;">We encourage you to re-apply after addressing the mentioned concerns. Let us know if you need any further information.</p>
-      
-      <div style="margin-top: 18px;">
-        <p style="font-size: 12px;">Best regards,<br><span style="font-weight:bold">Flykup</span></p>
+      <p style="font-size:16px; line-height:1.6;">
+        Thank you for your interest in becoming a seller on Flykup. After a careful review, we regret to inform you that your application could not be approved at this time.
+      </p>
+      <p style="font-size:16px; font-weight:bold; margin-top:20px; margin-bottom:10px;">Reason for rejection:</p>
+      <div style="background-color:#fbeaea; border-left:4px solid #d9534f; padding:12px; font-size:15px; margin-bottom:20px;">
+        <p style="margin:0;">{rejectedReason}</p>
       </div>
+      <p style="font-size:16px; line-height:1.6;">
+        We encourage you to correct the information and re-apply. If you believe this decision was made in error, or if you have any questions, please contact our support team.
+      </p>
+      <p style="font-size:14px; color:#333; margin-top:24px; margin-bottom:0;">
+        Best regards,<br>
+        <span style="font-weight:bold;">The Flykup Team</span>
+      </p>
+    </div>
+    <div style="color:#757575; font-size:12px; text-align:center; padding:16px;">
+      <p style="margin:0;">This is an automated message. Please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+
+export const APPLICATION_MANUAL_REVIEW = `
+<!DOCTYPE html>
+<html lang="en" style="color:#333; font-family:Arial, sans-serif; margin:0; padding:0;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Seller Application is Under Review</title>
+</head>
+<body style="margin:0; padding:16px; background-color:#f9f9f9; font-family:Arial, sans-serif;">
+  <div style="max-width:600px; margin:0 auto; background-color:white; border-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1);">
+    <div style="background-color:#2c2c2c; padding:24px; text-align:center; border-top-left-radius:8px; border-top-right-radius:8px;">
+      <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height:40px;">
+    </div>
+    <div style="padding:24px; color:#333;">
+      <h1 style="font-size:20px; font-weight:bold; margin:0 0 16px;">Your Application is Being Reviewed</h1>
+      <p style="font-size:16px; line-height:1.6;">
+        Hello {userName},
+      </p>
+      <p style="font-size:16px; line-height:1.6;">
+        Thank you for submitting your seller application. Your submission requires a manual review by our team to ensure all details are correct.
+      </p>
+      <p style="font-size:16px; line-height:1.6;">
+        This process typically takes <strong>2-3 business days</strong>. We will notify you by email as soon as a decision is made. Thank you for your patience.
+      </p>
+      <p style="font-size:14px; color:#333; margin-top:24px; margin-bottom:0;">
+        Best regards,<br>
+        <span style="font-weight:bold;">The Flykup Team</span>
+      </p>
+    </div>
+    <div style="color:#757575; font-size:12px; text-align:center; padding:16px;">
+      <p style="margin:0;">This is an automated message. Please do not reply to this email.</p>
     </div>
   </div>
 </body>

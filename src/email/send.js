@@ -1,5 +1,5 @@
 import { mailOptions, transporter } from "./config.js";
-import { APPLICATION_ACCEPTED, APPLICATION_REJECTED, FORGOT_PASSWORD_OTP_EMAIL, OTP_EMAIL, PASSWORD_RESET_SUCCESS, RECEIVED_SELLER_APPLICATION, WELCOME_EMAIL } from "./templates.js";
+import { APPLICATION_ACCEPTED, APPLICATION_REJECTED, FORGOT_PASSWORD_OTP_EMAIL, OTP_EMAIL, PASSWORD_RESET_SUCCESS, RECEIVED_SELLER_APPLICATION, WELCOME_EMAIL,APPLICATION_MANUAL_REVIEW } from "./templates.js";
 
 
 export const sendEmailOtp = async (email, otp, userName="user") => {
@@ -120,3 +120,51 @@ export const sendApplicationRejected = async ( email , userName="user" , rejecte
         return false;
     }
 }
+
+
+export const sendSellerApplicationReceived = (email, userName) => {
+  const mailOptions = {
+    from: `"Flykup Seller Team" <${process.env.HOSTINGER_EMAIL}>`,
+    to: email,
+    subject: 'Your Seller Application Has Been Received',
+    html: RECEIVED_SELLER_APPLICATION.replace(/{userName}/g, userName)
+  };
+  
+  return transporter.sendMail(mailOptions);
+};
+
+export const sendSellerApplicationApproved = (email, userName) => {
+  const mailOptions = {
+    from: `"Flykup Seller Team" <${process.env.HOSTINGER_EMAIL}>`,
+    to: email,
+    subject: 'Congratulations! Your Seller Account is Approved',
+    html: APPLICATION_ACCEPTED.replace(/{userName}/g, userName)
+  };
+  
+  return transporter.sendMail(mailOptions);
+};
+
+export const sendSellerApplicationRejected = (email, userName, reason) => {
+  let html = APPLICATION_REJECTED.replace(/{userName}/g, userName);
+  html = html.replace(/{rejectedReason}/g, reason);
+  
+  const mailOptions = {
+    from: `"Flykup Seller Team" <${process.env.HOSTINGER_EMAIL}>`,
+    to: email,
+    subject: 'Update on Your Seller Application',
+    html: html
+  };
+  
+  return transporter.sendMail(mailOptions);
+};
+
+export const sendSellerApplicationManualReview = (email, userName) => {
+  const mailOptions = {
+    from: `"Flykup Seller Team" <${process.env.HOSTINGER_EMAIL}>`,
+    to: email,
+    subject: 'Your Seller Application is Under Review',
+    html: APPLICATION_MANUAL_REVIEW.replace(/{userName}/g, userName)
+  };
+
+  return transporter.sendMail(mailOptions);
+};

@@ -886,7 +886,6 @@
 // };
 
 
-
 import {
   generateUniqueUsername,
   validateResetPassword,
@@ -902,8 +901,9 @@ import {
 } from "../email/send.js";
 import generateTokens from "../utils/generateTokens.js";
 import { USER_PUBLIC_FIELDS } from "../utils/constants.js";
-import jwt from "jsonwebtoken";
-import mongoose from "mongoose"; 
+import jwt from 'jsonwebtoken'; // Ensure this import is present
+import mongoose from "mongoose";
+
 const jwtSecret = process.env.JWT_SECRET;
 const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
 
@@ -1258,7 +1258,7 @@ export const loginUser = async (req, res) => {
     console.error("Error in loginUser:", error.message);
     return res.status(500).json({
       status: false,
-      message: "Internal Server Error. Please try again later.",
+      message: error.message || "Internal Server Error. Please try again later.",
     });
   }
 };
@@ -1422,27 +1422,63 @@ export const getAuthenticatedUser = async (req, res) => {
 };
 
 // refresh token api
+// export const refreshAccessToken = async (req, res) => {
+//   try {
+//     const { refreshToken } = req.body;
+//     if (!refreshToken) {
+//       return res.status(401).json({ status: false, message: "Unauthorized" });
+//     }
+
+//     const decoded = jwt.verify(refreshToken, jwtRefreshSecret);
+//     const newAccessToken = jwt.sign({ _id: decoded._id }, jwtSecret, {
+//       expiresIn: "1h",
+//     });
+
+//     return res.status(200).json({ 
+//       status: true, 
+//       message: "Token Refreshed", 
+//       accessToken: newAccessToken 
+//     });
+//   } catch (error) {
+//     res.status(401).json({ status: false, message: "Invalid refresh token" });
+//   }
+// };
+
 export const refreshAccessToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) {
-      return res.status(401).json({ status: false, message: "Unauthorized" });
+      return res.status(401).json({ status: false, message: "Refresh token required" });
     }
 
+    // Verify refresh token using the jwt module
     const decoded = jwt.verify(refreshToken, jwtRefreshSecret);
-    const newAccessToken = jwt.sign({ _id: decoded._id }, jwtSecret, {
-      expiresIn: "1h",
-    });
+    
+    // Check if user exists
+    const user = await User.findById(decoded._id);
+    if (!user) {
+      return res.status(401).json({ status: false, message: "User not found" });
+    }
+
+    // Generate new tokens
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user._id);
 
     return res.status(200).json({ 
       status: true, 
       message: "Token Refreshed", 
-      accessToken: newAccessToken 
+      accessToken,
+      refreshToken: newRefreshToken
     });
   } catch (error) {
-    res.status(401).json({ status: false, message: "Invalid refresh token" });
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ status: false, message: "Refresh token expired" });
+    }
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ status: false, message: "Invalid refresh token" });
+    }
+    res.status(500).json({ status: false, message: "Internal server error" });
   }
-};
+};  
 
 // logout user
 export const logoutUser = async (req, res) => {

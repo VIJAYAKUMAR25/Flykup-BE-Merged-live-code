@@ -210,7 +210,7 @@ export const getProductsForDropshipper = async (req, res) => {
 
   } catch (error) {
     console.error("Error in getProductsForDropshipper:", error.message);
-    res.status(500).json({ status: false, message: "Internal server Error." });
+    res.status(500).json({ status: false, message:error.message || "Internal server Error..." });
   }
 };
 

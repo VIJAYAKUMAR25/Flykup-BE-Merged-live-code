@@ -179,6 +179,8 @@ UserSchema.pre(
     }
   }
 );
+UserSchema.index({ role: 1 });
+UserSchema.index({ emailId: 1 }, { unique: true });
 
 const User = mongoose.model("users", UserSchema);
 export default User;

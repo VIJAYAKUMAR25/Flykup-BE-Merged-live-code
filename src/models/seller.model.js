@@ -311,16 +311,19 @@ const RedFlagsSchema = new mongoose.Schema({
   type: { type: String, required: true},
   description: { type: String, required: true },
   severity: { type: String, enum: [ 'low', 'medium', 'high' ], required: true}
-}, { _id: false })
+}, { _id: false });
 
 const ScoringSchema = new mongoose.Schema({
   totalScore: { type: Number, default: 0, min: 0},
   breakdown: { type: mongoose.Schema.Types.Mixed, default: {}},
   redFlags: [ RedFlagsSchema ],
   manualChecks: [ String ],
-  recommendation: { type: String, enum: ['auto_approved','auto_rejected','manual_review']},
+  recommendation: { 
+    type: String, 
+    enum: ['auto_approved','auto_rejected','manual_review']
+  },
   rejectedReason: { type: String, default: null}
-}, { _id: false })
+}, { _id: false });
 
 const SellerSchema = new mongoose.Schema(
   {
@@ -522,15 +525,15 @@ const SellerSchema = new mongoose.Schema(
     generalAccepted: { type: Boolean, default: false },
     sellerAccepted: { type: Boolean, default: false },
     digitalAccepted: { type: Boolean, default: false },
-    approvalStatus: {
+     approvalStatus: {
       type: String,
       enum: [
         "pending",
         "auto_approved",
         "auto_rejected",
         "manual_review",
-        "approved",
-        "rejected",
+        "approved",    // Manual approval
+        "rejected",    // Manual rejection
       ],
       default: "pending",
     },
@@ -548,6 +551,32 @@ const SellerSchema = new mongoose.Schema(
   },
   { timestamps: true, strict: true }
 );
+
+
+SellerSchema.pre('save', function(next) {
+  // Ensure approvalStatus always has a value
+  if (!this.approvalStatus) {
+    this.approvalStatus = 'pending';
+  }
+  
+  // Ensure scoring exists
+  if (!this.scoring) {
+    this.scoring = {
+      totalScore: 0,
+      breakdown: {},
+      redFlags: [],
+      manualChecks: [],
+      recommendation: "manual_review",
+      rejectedReason: null
+    };
+  }
+  
+  next();
+});
+
+SellerSchema.index({ userInfo: 1 }, { unique: true });
+SellerSchema.index({ "aadhaarInfo.aadhaarNumber": 1 });
+SellerSchema.index({ approvalStatus: 1 });
 
 const Seller = mongoose.model("sellers", SellerSchema);
 

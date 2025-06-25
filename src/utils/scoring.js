@@ -51,7 +51,7 @@ const SCORING_CONFIG = {
   },
   thresholds: {
     autoApprove: 80,
-    autoReject: 40,
+    autoReject: 50,
   }
 };
 
@@ -336,8 +336,19 @@ function checkRedFlags(application, previousApplications) {
     });
   }
   
+  if (application.rejectedTimes >= 2) {
+    score += SCORING_CONFIG.redFlags.multipleDeclinedApplications;
+    redFlags.push({
+      type: "multiple_rejections",
+      description: `Application has been rejected ${application.rejectedTimes} times`,
+      severity: "medium"
+    });
+    requiredManualChecks.push("Review previous rejection reasons");
+  }
+
   return { score, redFlags, requiredManualChecks };
 }
+
 
 function generateRejectionReason(redFlags, totalScore) {
   if (redFlags.length > 0) {
@@ -370,52 +381,70 @@ function generateRejectionReason(redFlags, totalScore) {
   return "Your application does not meet our approval criteria at this time.";
 }
 
-export const calculateSellerScore = (application, previousApplications = []) => {
+export const calculateSellerScore = (application) => {
   let totalScore = 0;
-  const breakdown        = {};
-  let redFlags           = [];
-  let manualChecks       = [];
+  const breakdown = {};
+  let redFlags = [];
+  let manualChecks = [];
 
   // 1. KYC
   const kycResult = scoreKYC(application);
-  totalScore    += kycResult.score;
+  totalScore += kycResult.score;
   Object.assign(breakdown, { kyc: kycResult.breakdown });
 
   // 2. Experience
   const expResult = scoreExperience(application);
-  totalScore    += expResult.score;
+  totalScore += expResult.score;
   Object.assign(breakdown, { experience: expResult.breakdown });
 
   // 3. Product
   const prodResult = scoreProduct(application);
-  totalScore     += prodResult.score;
+  totalScore += prodResult.score;
   Object.assign(breakdown, { product: prodResult.breakdown });
 
   // 4. Logistics
   const logResult = scoreLogistics(application);
-  totalScore    += logResult.score;
+  totalScore += logResult.score;
   Object.assign(breakdown, { logistics: logResult.breakdown });
 
   // 5. Business
   const busResult = scoreBusiness(application);
-  totalScore    += busResult.score;
+  totalScore += busResult.score;
   Object.assign(breakdown, { business: busResult.breakdown });
 
-  // 6. Red flags
-  const rfResult = checkRedFlags(application, previousApplications);
+  // 6. Red flags (using application's own rejectedTimes)
+  const rfResult = checkRedFlags(application);
   totalScore += rfResult.score;
-  redFlags     = rfResult.redFlags;
+  redFlags = rfResult.redFlags;
   manualChecks = rfResult.requiredManualChecks;
 
-  // 7. Final recommendation & reason
-  let recommendation  = 'manual_review';
-  let rejectionReason = null;
+  // 7. Final recommendation
+  let recommendation = 'manual_review';
+  let rejectedReason = null;
 
   if (totalScore >= SCORING_CONFIG.thresholds.autoApprove && redFlags.length === 0) {
     recommendation = 'auto_approved';
   } else if (totalScore <= SCORING_CONFIG.thresholds.autoReject || redFlags.length > 0) {
-    recommendation  = 'auto_rejected';
-    rejectionReason = generateRejectionReason(redFlags, totalScore);
+    recommendation = 'auto_rejected';
+    rejectedReason = generateRejectionReason(redFlags, totalScore);
+  }
+  const scoringCache = new Map();
+
+   const cacheKey = JSON.stringify({
+    gst: application.gstInfo,
+    pan: application.panInfo,
+    aadhaar: application.aadhaarInfo,
+    experience: application.sellerExperienceInfo,
+    products: application.productCatalog,
+    categories: application.productCategories,
+    logistics: application.shippingInfo,
+    business: application.businessType,
+    redFlags: application.rejectedTimes
+  });
+  
+  // Return cached result if available
+  if (scoringCache.has(cacheKey)) {
+    return scoringCache.get(cacheKey);
   }
 
   return {
@@ -424,6 +453,6 @@ export const calculateSellerScore = (application, previousApplications = []) => 
     redFlags,
     manualChecks,
     recommendation,
-    rejectionReason
+    rejectedReason
   };
 };

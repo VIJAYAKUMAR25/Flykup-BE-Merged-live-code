@@ -422,7 +422,6 @@ export const updateVideoVisibility = async (req, res) => {
 // UPLOADING STATUS GETTING IN SOCKET
 
 export const getShoppableVideoDetailsForStatus = async (videoId) => {
-    console.log(`Fetching shoppable video details for status (ID: ${videoId})`);
   try {
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
       return { error: 'Invalid video ID format', status: 400, data: null };
@@ -435,7 +434,6 @@ export const getShoppableVideoDetailsForStatus = async (videoId) => {
     }
     return { error: null, status: 200, data: video.toObject() }; // Use .toObject() for plain JS object
   } catch (error) {
-    console.error(`Error fetching shoppable video details for status (ID: ${videoId}):`, error);
     return { error: 'Internal server error while fetching video status', status: 500, data: null };
   }
 };
@@ -527,7 +525,49 @@ console.log("Received Video Processing Update:", req.body);
 
 
 
+export const getPublicShoppableVideoById = async (req, res) => {
+    const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ status: false, message: "Invalid Video ID format." });
+    }
+
+    try {
+        const video = await ShoppableVideo.findOne({
+            _id: id,
+            visibility: 'public',
+            processingStatus: 'published'
+        })
+        .populate("productsListed", PRODUCT_PUBLIC_FIELDS)
+        .populate({
+            path: "host",
+            select: "companyName businessName userInfo approvalStatus",
+            populate: { 
+                path: 'userInfo', 
+                select: 'userName name profileURL' 
+            }
+        });
+
+        if (!video) {
+            return res.status(404).json({
+                status: false,
+                message: "Video not found or not publicly available"
+            });
+        }
+
+        res.status(200).json({
+            status: true,
+            message: "Public video fetched successfully!",
+            data: video
+        });
+    } catch (error) {
+        console.error("Error in getPublicShoppableVideoById:", error);
+        res.status(500).json({
+            status: false,
+            message: "Internal server error."
+        });
+    }
+};
 
 
 

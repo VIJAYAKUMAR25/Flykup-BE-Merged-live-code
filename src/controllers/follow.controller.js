@@ -165,7 +165,7 @@ export const getFollowingsByUserId = async (req, res) => {
                 _id: 0,
                 userId: "$followingData._id",
                 userName: "$followingData.userName",
-                profileURL: { $ifNull: ["$followingData.profileURL.azureUrl", null]},
+                profileURL: { $ifNull: ["$followingData.profileURL.key", null]},
                 role: "$followingData.role",
                 followStatus: {
                   $cond: [
@@ -317,7 +317,7 @@ export const getFollowersByUserId = async (req, res) => {
                 _id: 0,
                 userId: "$followerData._id",
                 userName: "$followerData.userName",
-                profileURL: {$ifNull: ["$followerData.profileURL.azureUrl", null]},
+                profileURL: {$ifNull: ["$followerData.profileURL.key", null]},
                 role: "$followerData.role",
                 followStatus: {
                   $cond: [

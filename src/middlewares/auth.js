@@ -693,12 +693,21 @@ export const hostAuth = async (req, res, next) => {
 };
 
 // Show hosting permission check
+// Improved middleware to check for hosting permission
 export const canHostShow = async (req, res, next) => {
   try {
-    const user = await verifyTokenAndGetUser(req);
+    // 1. Use req.user if it's already attached by userAuth.
+    //    Otherwise, verify the token independently. This makes the middleware robust.
+    const user = req.user || await verifyTokenAndGetUser(req);
+
     if (!user) {
-      return res.status(401).json({ status: false, message: "Unauthorized" });
+      return res.status(401).json({ status: false, message: "Unauthorized. No user found for hosting check." });
     }
+    
+    // 2. IMPORTANT: Ensure req.user is attached for the next controller in the chain.
+    req.user = user;
+
+    // --- The rest of your logic remains the same ---
 
     // Seller validation
     if (user.role === 'seller') {
@@ -706,6 +715,7 @@ export const canHostShow = async (req, res, next) => {
       let seller = getCached(sellerCache, cacheKey);
       
       if (!seller) {
+        // Use user.sellerInfo which should be populated or an ID
         seller = await Seller.findById(user.sellerInfo);
         if (seller) setCached(sellerCache, cacheKey, seller);
       }
@@ -719,6 +729,7 @@ export const canHostShow = async (req, res, next) => {
 
     // Dropshipper validation
     if (user.role === 'dropshipper') {
+      // Use user.dropshipperInfo which should be populated or an ID
       const dropshipper = await Dropshipper.findById(user.dropshipperInfo)
         .populate({
           path: 'connectedSellers',
@@ -727,21 +738,19 @@ export const canHostShow = async (req, res, next) => {
         });
 
       if (dropshipper && ['approved', 'auto_approved'].includes(dropshipper.approvalStatus)) {
-        // Add approved seller IDs for quick access
-        dropshipper.approvedSellerIds = dropshipper.connectedSellers.map(
-          conn => conn.sellerId
-        );
-
+        dropshipper.approvedSellerIds = dropshipper.connectedSellers.map(conn => conn.sellerId);
         req.showHost = dropshipper;
         req.showHostModel = 'dropshippers';
         return next();
       }
     }
-
+    
+    // If neither role check passed
     return res.status(403).json({ 
       status: false, 
-      message: "Must be approved seller or dropshipper to host shows" 
+      message: "User must be an approved seller or dropshipper to host shows." 
     });
+
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ status: false, message: "Token expired" });
@@ -749,10 +758,10 @@ export const canHostShow = async (req, res, next) => {
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ status: false, message: "Invalid token" });
     }
+    console.error("Error in canHostShow middleware:", error);
     res.status(500).json({ status: false, message: "Internal Server Error" });
   }
 };
-
 // Show ownership validation
 export const isHost = async (req, res, next) => {
   try {

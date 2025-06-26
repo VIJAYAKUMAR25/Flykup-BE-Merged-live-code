@@ -3,31 +3,13 @@ const { Schema } = mongoose;
 
 // Define a schema for the co-host details
 const coHostDetailSchema = new Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "users", // Or your relevant user/seller model
-    required: true,
-  },
-  userName: {
-    type: String,
-    required: true,
-  },
-  role: {
-    type: String,
-    required: true,
-  },
-  profileURL: {
-    type: String,
-    default: null,
-  },
-  companyName: {
-    type: String,
-  },
-  sellerType: {
-    type: String,
-  },
-}, { _id: false }); // _id is not needed for this subdocument
-
+userId: { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
+  userName: { type: String, required: true },
+  role: { type: String, required: true },
+  profileURL: { type: String, default: null },
+  companyName: { type: String },
+  sellerType: { type: String },
+}, { _id: false });
 // Comment Schema
 const commentSchema = new Schema({
   user: {

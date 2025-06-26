@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import CoHostInvite from "../models/coHostInvitation.model.js";
 import Show from "../models/shows.model.js";
 import User from "../models/user.model.js";
@@ -5,84 +6,65 @@ import { USER_PUBLIC_FIELDS } from "../utils/constants.js";
 import { createSearchRegex } from "../utils/helper.js";
 
 export const getSellersAndDropshippers = async (req, res) => {
-  try {
-    const { search = "" } = req.query;
-    const limit = 30;
-    const requestingUser = req?.user ;
+  try {
+    const { search = "" } = req.query;
+    const limit = 30;
+    const requestingUser = req?.user ;
 
-    const queryConditions = {
-      role: { $in: ["seller", "dropshipper"] },
-    };
+    const queryConditions = {
+      role: { $in: ["seller", "dropshipper"] },
+    };
 
-    const trimmedSearch = search.trim();
-    if (trimmedSearch) {
-      queryConditions.userName = createSearchRegex(trimmedSearch);
-    }
+    const trimmedSearch = search.trim();
+    if (trimmedSearch) {
+      queryConditions.userName = createSearchRegex(trimmedSearch);
+    }
 
-    // ---- Exclude requesting user from this list ----
-    if ( requestingUser?._id ) {
-      queryConditions._id = { $ne: requestingUser._id }
-    }
+    if ( requestingUser?._id ) {
+      queryConditions._id = { $ne: requestingUser._id }
+    }
 
-    const users = await User.find(queryConditions)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .select(USER_PUBLIC_FIELDS)
-      .populate({
-        path: "sellerInfo",
-        select: "sellerType companyName _id",
-      })
-      .populate({
-        path: "dropshipperInfo",
-        select: "businessName _id",
-      })
-      .lean();
+    const users = await User.find(queryConditions)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .select(USER_PUBLIC_FIELDS)
+      .populate({ path: "sellerInfo", select: "sellerType companyName _id" })
+      .populate({ path: "dropshipperInfo", select: "businessName _id" })
+      .lean();
 
-    // Transform data into desired format
-    const formattedData = users.map((user) => {
-      const isSeller = user.role === "seller";
-      const isDropshipper = user.role === "dropshipper";
+    const formattedData = users.map((user) => {
+      const isSeller = user.role === "seller";
+      const isDropshipper = user.role === "dropshipper";
+      const sellerData = user.sellerInfo;
+      const dropshipperData = user.dropshipperInfo;
+      let companyName = null;
+      let sellerType = null;
+      if (isSeller && sellerData) {
+        companyName = sellerData?.companyName;
+        sellerType = sellerData.sellerType;
+      } else if (isDropshipper && dropshipperData) {
+        companyName = dropshipperData?.businessName;
+        sellerType = undefined;
+      }
+      return {
+        userId: user._id,
+        userName: user.userName,
+        role: user.role,
+        profileURL: user.profileURL?.key || null,
+        companyName,
+        sellerType,
+      };
+    });
 
-      const sellerData = user.sellerInfo;
-      const dropshipperData = user.dropshipperInfo;
-
-      let companyName = null;
-      let sellerType = null;
-
-      if (isSeller && sellerData) {
-        companyName = sellerData?.companyName;
-        sellerType = sellerData.sellerType;
-      } else if (isDropshipper && dropshipperData) {
-        companyName = dropshipperData?.businessName;
-        sellerType = undefined;
-      }
-
-      return {
-        userId: user._id,
-        userName: user.userName,
-        role: user.role,
-        profileURL: user.profileURL?.key || null,
-        companyName,
-        sellerType,
-      };
-    });
-
-    return res
-      .status(200)
-      .json({
-        status: true,
-        message:
-          formattedData?.length === 0
-            ? "No user found"
-            : "Sellers and Dropshippers fetched successfully!",
-        data: formattedData || [],
-      });
-  } catch (error) {
-    console.error("Error in getSellersAndDropshippers:", error.message);
-    return res
-      .status(500)
-      .json({ status: false, message: "Internal server error." });
-  }
+    return res.status(200).json({
+      status: true,
+      message: formattedData?.length === 0 ? "No user found" : "Sellers and Dropshippers fetched successfully!",
+      data: formattedData || [],
+    });
+  } catch (error) {
+    console.error("Error in getSellersAndDropshippers:", error.message);
+    return res.status(500).json({ status: false, message: "Internal server error." });
+  }
 };
 
 export const sendInvite = async (req, res) => {
@@ -347,43 +329,64 @@ export const getShowCoHostInvites = async (req, res) => {
 };
 
 export const respondToCoHostInvite = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { inviteId } = req.params;
-    const { action } = req.body; // action = 'accepted' or 'rejected'
+    const { action } = req.body; // 'accepted' or 'rejected'
     const cohostUserId = req?.user?._id;
 
     if (!["accepted", "rejected"].includes(action)) {
       return res.status(400).json({ status: false, message: "Invalid action" });
     }
 
-    const invite = await CoHostInvite.findById(inviteId);
+    const invite = await CoHostInvite.findById(inviteId).populate({
+        path: 'cohost.userId',
+        select: 'userName profileURL role sellerInfo dropshipperInfo',
+        populate: [
+            { path: 'sellerInfo', select: 'companyName sellerType' },
+            { path: 'dropshipperInfo', select: 'businessName' }
+        ]
+    }).session(session);
 
     if (!invite) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Invite not found" });
+      return res.status(404).json({ status: false, message: "Invite not found" });
     }
-
-    // Only cohost can accept/reject
-    if (String(invite.cohost.userId) !== String(cohostUserId)) {
-      return res.status(403).json({ status: false, message: "Not authorized" });
+    if (String(invite.cohost.userId._id) !== String(cohostUserId)) {
+      return res.status(403).json({ status: false, message: "Not authorized to respond to this invite" });
+    }
+    if (invite.status !== 'pending') {
+        return res.status(400).json({ status: false, message: `This invite is no longer pending. Current status: ${invite.status}` });
     }
 
     invite.status = action;
     if (action === "accepted") {
       invite.joinedAt = new Date();
-    }
-    await invite.save();
+      
+      const cohostUser = invite.cohost.userId;
+      const cohostDetailsForShow = {
+        userId: cohostUser._id,
+        userName: cohostUser.userName,
+        role: cohostUser.role,
+        profileURL: cohostUser.profileURL?.azureUrl || null,
+        companyName: cohostUser.sellerInfo?.companyName || cohostUser.dropshipperInfo?.businessName || null,
+        sellerType: cohostUser.sellerInfo?.sellerType || null,
+      };
 
-    return res.status(200).json({ status: true, message: `Invite ${action}` });
+      await Show.findByIdAndUpdate(invite.show, { coHost: cohostDetailsForShow }, { session });
+    }
+
+    await invite.save({ session });
+    await session.commitTransaction();
+    return res.status(200).json({ status: true, message: `Invite ${action} successfully.` });
   } catch (error) {
+    await session.abortTransaction();
     console.error("respondToCoHostInvite error", error.message);
-    return res
-      .status(500)
-      .json({ status: false, message: "Internal server error" });
+    return res.status(500).json({ status: false, message: "Internal server error" });
+  } finally {
+      session.endSession();
   }
 };
-
 export const cancelCoHostInvite = async (req, res) => {
   try {
     const { inviteId } = req.params;
@@ -413,6 +416,7 @@ export const cancelCoHostInvite = async (req, res) => {
     }
 
     invite.status = "cancelled";
+     invite.reason = 'HOST_CANCELLED_PENDING'; 
     await invite.save();
 
     return res.status(200).json({ status: true, message: "Invite cancelled" });
@@ -425,82 +429,59 @@ export const cancelCoHostInvite = async (req, res) => {
 };
 
 export const leaveCoHost = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { inviteId } = req.params;
     const cohostUserId = req?.user?._id;
-
-    const invite = await CoHostInvite.findById(inviteId);
-
-    if (!invite) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Invite not found" });
-    }
-
-    // Only cohost can leave
-    if (String(invite.cohost.userId) !== String(cohostUserId)) {
-      return res.status(403).json({ status: false, message: "Not authorized" });
-    }
-
-    if (invite.status !== "accepted") {
-      return res
-        .status(400)
-        .json({ status: false, message: "You haven't joined yet" });
-    }
+    const invite = await CoHostInvite.findById(inviteId).session(session);
+    if (!invite) return res.status(404).json({ status: false, message: "Invite not found" });
+    if (String(invite.cohost.userId) !== String(cohostUserId)) return res.status(403).json({ status: false, message: "Not authorized" });
+    if (invite.status !== "accepted") return res.status(400).json({ status: false, message: "Cannot leave a show that you have not accepted." });
 
     invite.status = "left";
+    invite.reason = 'COHOST_LEFT_VOLUNTARILY';
     invite.leftAt = new Date();
-    await invite.save();
-
-    return res
-      .status(200)
-      .json({ status: true, message: "You have left the co-hosting" });
+    await Show.findByIdAndUpdate(invite.show, { coHost: null }, { session });
+    await invite.save({ session });
+    await session.commitTransaction();
+    return res.status(200).json({ status: true, message: "You have left the co-hosting." });
   } catch (error) {
+    await session.abortTransaction();
     console.error("leaveCoHost error", error.message);
-    return res
-      .status(500)
-      .json({ status: false, message: "Internal server error" });
+    return res.status(500).json({ status: false, message: "Internal server error" });
+  } finally {
+      session.endSession();
   }
 };
-
 export const removeCoHostByHost = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { inviteId } = req.params;
     const hostUserId = req?.user?._id;
+    const invite = await CoHostInvite.findById(inviteId).session(session);
+    if (!invite) return res.status(404).json({ status: false, message: "Invite not found" });
+    if (String(invite.host.userId) !== String(hostUserId)) return res.status(403).json({ status: false, message: "Only the host can remove a co-host." });
+    if (invite.status !== "accepted") return res.status(400).json({ status: false, message: "Co-host is not currently active in this show." });
 
-    const invite = await CoHostInvite.findById(inviteId);
-
-    if (!invite) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Invite not found" });
-    }
-
-    // Only host can remove cohost
-    if (String(invite.host.userId) !== String(hostUserId)) {
-      return res.status(403).json({ status: false, message: "Not authorized" });
-    }
-
-    if (invite.status !== "accepted") {
-      return res
-        .status(400)
-        .json({ status: false, message: "Cohost is not currently active" });
-    }
-
-    invite.status = "left"; // Same as cohost leaving
+    invite.status = "left";
+    invite.reason = 'HOST_REMOVED_COHOST'; 
     invite.leftAt = new Date();
     await invite.save();
-
-    return res
-      .status(200)
-      .json({ status: true, message: "Cohost removed successfully" });
+    await Show.findByIdAndUpdate(invite.show, { coHost: null }, { session });
+    await invite.save({ session });
+    await session.commitTransaction();
+    return res.status(200).json({ status: true, message: "Co-host removed successfully." });
   } catch (error) {
+    await session.abortTransaction();
     console.error("removeCoHostByHost error", error.message);
-    return res
-      .status(500)
-      .json({ status: false, message: "Internal server error" });
+    return res.status(500).json({ status: false, message: "Internal server error" });
+  } finally {
+      session.endSession();
   }
 };
+
 
 export const getReceivedCoHostRequests = async (req, res) => {
   try {
@@ -514,7 +495,7 @@ export const getReceivedCoHostRequests = async (req, res) => {
       .populate({
         path: "show",
         select:
-          "title scheduledAt thumbnailImageURL previewVideoURL liveStreamId showStatus",
+          "title scheduledAt thumbnailImage previewVideo liveStreamId showStatus",
       })
       .populate({
         path: 'host.userId',
@@ -547,7 +528,8 @@ export const getReceivedCoHostRequests = async (req, res) => {
           showId: invite.show?._id,
           title: invite.show?.title,
           scheduledAt: invite.show?.scheduledAt,
-          thumbnailImageURL: invite.show?.thumbnailImageURL,
+          thumbnailImage: invite.show?.thumbnailImage,
+          previewVideo: invite.show?.previewVideo,
           liveStreamId: invite.show?.liveStreamId,
           showStatus: invite.show?.showStatus,
         },
@@ -574,5 +556,99 @@ export const getReceivedCoHostRequests = async (req, res) => {
     return res
       .status(500)
       .json({ status: false, message: "Internal server error" });
+  }
+};
+
+/**
+ * NEW CONTROLLER for inviting a co-host to a LIVE stream.
+ * This action cancels any previous invites and immediately accepts the new one.
+ */
+export const inviteAndJoinLive = async (req, res) => {
+  const { showId } = req.params;
+  const { cohostUserId } = req.body;
+  const hostUserId = req?.user?._id;
+
+  // A transaction ensures all database operations succeed or fail together
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const show = await Show.findById(showId).session(session);
+    if (!show) {
+      throw new Error("Show not found.");
+    }
+    if (show.showStatus !== "live") {
+      throw new Error("This action is only available for shows that are currently live.");
+    }
+    if (String(show.host) !== String(req.hostId)) {
+        throw new Error("Only the main host can perform this action.");
+    }
+    if (String(hostUserId) === String(cohostUserId)) {
+        throw new Error("You cannot invite yourself as a co-host.");
+    }
+
+    // Step 1: Cancel any existing pending or accepted invites for this show
+    await CoHostInvite.updateMany(
+      { show: showId, status: { $in: ["pending", "accepted"] } },
+      { $set: { status: "cancelled", leftAt: new Date() } },
+      { session }
+    );
+
+    // Step 2: Fetch details for the new co-host to be invited
+    const cohostUser = await User.findById(cohostUserId).populate("sellerInfo").populate("dropshipperInfo").lean();
+    if (!cohostUser) throw new Error("Invited user not found.");
+    
+    // Determine the co-host's specific role ID (Seller or Dropshipper)
+    let cohostHostId = null;
+    let cohostHostModel = null;
+    if (cohostUser.role === "seller" && cohostUser.sellerInfo) {
+        cohostHostId = cohostUser.sellerInfo._id;
+        cohostHostModel = "sellers";
+    } else if (cohostUser.role === "dropshipper" && cohostUser.dropshipperInfo) {
+        cohostHostId = cohostUser.dropshipperInfo._id;
+        cohostHostModel = "dropshippers";
+    } else {
+        throw new Error("Invited co-host must be a registered Seller or Dropshipper.");
+    }
+
+    // Step 3: Create a new, immediately 'accepted' invite
+    const newInvite = new CoHostInvite({
+      show: showId,
+      host: { userId: hostUserId, hostId: req.hostId, hostModel: req.showHostModel },
+      cohost: { userId: cohostUserId, hostId: cohostHostId, hostModel: cohostHostModel },
+      status: "accepted", // Immediately mark as accepted
+      joinedAt: new Date(),
+      liveStreamId: show.liveStreamId, // Add the stream ID so they can join
+    });
+    await newInvite.save({ session });
+
+    // Step 4: Update the main Show document with the new co-host's details
+    const cohostDetailsForShow = {
+        userId: cohostUser._id,
+        userName: cohostUser.userName,
+        role: cohostUser.role,
+        profileURL: cohostUser.profileURL?.azureUrl || null,
+        companyName: cohostUser.sellerInfo?.companyName || cohostUser.dropshipperInfo?.businessName || null,
+        sellerType: cohostUser.sellerInfo?.sellerType || null,
+    };
+    show.coHost = cohostDetailsForShow;
+    await show.save({ session });
+
+    // --- TODO: SEND A REAL-TIME NOTIFICATION TO THE NEW CO-HOST ---
+    // This is where you would trigger your WebSocket or Push Notification service
+    console.log(`Live invite notification trigger for co-host: ${cohostUserId}`);
+
+    await session.commitTransaction();
+    res.status(200).json({
+      status: true,
+      message: "Live co-host invitation sent and accepted successfully!",
+      data: newInvite,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    console.error("Error in inviteAndJoinLive:", error.message);
+    res.status(400).json({ status: false, message: error.message || "Failed to send live invitation." });
+  } finally {
+    session.endSession();
   }
 };

@@ -28,7 +28,7 @@ const showsRouter = express.Router();
 
 // Create a new show (Requires approved Seller or Dropshipper)
 // Path: /create
-showsRouter.post('/create', canHostShow, createShow);
+showsRouter.post('/create', userAuth, canHostShow, createShow);
 
 // Get a single show by ID (e.g., for viewing details - public or basic auth)
 // Path: /get/:id

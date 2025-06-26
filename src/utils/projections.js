@@ -4,14 +4,14 @@ export const userProjection = {
     _id: 1,
     userName: { $ifNull: ["$userName", null] },
     name: { $ifNull: ["$name", null] },
-    profileURL: { $ifNull: ["$profileURL.azureUrl", null] },
+    profileURL: { $ifNull: ["$profileURL.key", null] },
 };
 
 
 const sellerInfoProjectionPartForProducts = {
     sellerCompanyName: { $ifNull: ["$sellerDetails.companyName", null] },
     sellerUserName: { $ifNull: ["$userDetails.userName", null] },
-    sellerProfileURL: { $ifNull: ["$userDetails.profileURL.azureUrl", null] },
+    sellerProfileURL: { $ifNull: ["$userDetails.profileURL.key", null] },
 };
 
 export const productProjection = {
@@ -70,7 +70,7 @@ export const showProjection = {
     _id: 1,
     title: { $ifNull: ["$title", null] },
     thumbnailImage: { $ifNull: ["$thumbnailImage", null] },
-    previewVideoURL: { $ifNull: ["$previewVideoURL", null] },
+    previewVideo: { $ifNull: ["$previewVideo", null] },
     isLive: { $ifNull: ["$isLive", false] },
     showStatus: { $ifNull: ["$showStatus", null] },
     scheduledAt: { $ifNull: ["$scheduledAt", null] },

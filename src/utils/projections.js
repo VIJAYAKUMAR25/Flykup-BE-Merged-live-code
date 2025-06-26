@@ -21,6 +21,11 @@ export const productProjection = {
     productPrice: { $ifNull: ["$productPrice", null] },
     MRP: { $ifNull: ["$MRP", null] },
     sellerId: { $ifNull: ["$sellerId", null] }, 
+    description: { $ifNull: ["$description", null] },
+    category: { $ifNull: ["$category", null] },
+    subCategory: { $ifNull: ["$subCategory", null] },
+    tags: { $ifNull: ["$tags", null] },
+    createdAt: { $ifNull: ["$createdAt", null] },
     ...sellerInfoProjectionPartForProducts,
 };
 

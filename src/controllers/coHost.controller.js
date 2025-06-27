@@ -417,6 +417,7 @@ export const cancelCoHostInvite = async (req, res) => {
 
     invite.status = "cancelled";
      invite.reason = 'HOST_CANCELLED_PENDING'; 
+     invite.liveStreamId = null; 
     await invite.save();
 
     return res.status(200).json({ status: true, message: "Invite cancelled" });
@@ -441,6 +442,7 @@ export const leaveCoHost = async (req, res) => {
 
     invite.status = "left";
     invite.reason = 'COHOST_LEFT_VOLUNTARILY';
+     invite.liveStreamId = null;
     invite.leftAt = new Date();
     await Show.findByIdAndUpdate(invite.show, { coHost: null }, { session });
     await invite.save({ session });
@@ -467,6 +469,7 @@ export const removeCoHostByHost = async (req, res) => {
 
     invite.status = "left";
     invite.reason = 'HOST_REMOVED_COHOST'; 
+     invite.liveStreamId = null;
     invite.leftAt = new Date();
     await invite.save();
     await Show.findByIdAndUpdate(invite.show, { coHost: null }, { session });
@@ -536,7 +539,7 @@ export const getReceivedCoHostRequests = async (req, res) => {
         host: {
           userId: hostUser?._id,
           userName: hostUser?.userName,
-          profileURL: hostUser?.profileURL?.azureUrl || null,
+          profileURL: hostUser?.profileURL?.key || null,
           companyName: hostCompanyName,
           role: hostUser?.role,
           sellerType: hostSellerType
@@ -652,3 +655,4 @@ export const inviteAndJoinLive = async (req, res) => {
     session.endSession();
   }
 };
+

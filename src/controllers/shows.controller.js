@@ -1004,46 +1004,39 @@ export const getAllShows = async (req, res) => {
 /**
  * Start a show, updating its status to 'live'.
  */
+
 export const startShow = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { id } = req.params; // showId
-    const { liveStreamId } = req.body;
-    if (!liveStreamId) {
-      return res.status(400).json({ status: false, message: "liveStreamId is required." });
-    }
-
+    const { id } = req.params; // showId
+    const { liveStreamId } = req.body;
+    
     const updatedShow = await Show.findByIdAndUpdate(id, 
-        { isLive: true, showStatus: "live", liveStreamId }, 
+        { showStatus: "live", liveStreamId }, 
+        { new: true, session }
+    );
+    if (!updatedShow) {
+        throw new Error("Show not found during update.");
+    }
+
+    // *** SIMPLIFIED LOGIC ***
+    // Find the accepted co-host invite and simply update it with the liveStreamId.
+    const acceptedInvite = await CoHostInvite.findOneAndUpdate(
+        { show: id, status: "accepted" },
+        { $set: { liveStreamId: liveStreamId } },
         { new: true, session }
     );
 
-    if (!updatedShow) {
-        await session.abortTransaction();
-        return res.status(404).json({ status: false, message: "Show not found" });
+    if (acceptedInvite) {
+        console.log(`Updated co-host invite ${acceptedInvite._id} with liveStreamId: ${liveStreamId}`);
     }
-
-    const acceptedInvite = await CoHostInvite.findOne({
-      show: id,
-      status: "accepted",
-    }).session(session);
-
-    if (acceptedInvite) {
-      acceptedInvite.liveStreamId = liveStreamId;
-      await acceptedInvite.save({ session });
-      
-      // --- TODO: SEND REAL-TIME NOTIFICATION TO CO-HOST ---
-      // Use your notification service (e.g., Socket.IO, FCM) to inform the user.
-      // E.g., notifyUser(acceptedInvite.cohost.userId, { message: 'Show is live!' });
-      console.log(`Notification trigger for co-host: ${acceptedInvite.cohost.userId}`);
-    }
 
     await session.commitTransaction();
     res.status(200).json({ status: true, message: "Live Stream started successfully!", data: updatedShow });
   } catch (error) {
     await session.abortTransaction();
-    console.error("Error in startShow api:", error.message);
+    console.error("Error in startShow:", error.message);
     return res.status(500).json({ status: false, message: "Internal server error." });
   } finally {
     session.endSession();

@@ -8,8 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js",
-"update-geoip": "curl --ssl-no-revoke -sS \"https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=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&suffix=tar.gz\" | tar -xz --strip-components=1 -C geoip-data",
-    "postinstall": "if [ ! -f geoip-data/GeoLite2-City.mmdb ]; then npm run update-geoip; fi"
+"update-geoip": "curl --ssl-no-revoke -sS \"https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=YOUR_NEW_VALID_LICENSE_KEY&suffix=tar.gz\" | tar -xz --strip-components=1 -C geoip-data",
+   "postinstall": "mkdir -p geoip-data && if [ ! -f geoip-data/GeoLite2-City.mmdb ]; then npm run update-geoip; fi"
   },
   "keywords": [
     "node.js",

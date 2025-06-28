@@ -55,12 +55,20 @@ export const trackProductView = async (req, res) => {
             // Update product counters atomically
             const update = { $inc: { viewCount: 1 } };
             if (userId) update.$inc.uniqueViewCount = 1;
-            
-            await Product.findByIdAndUpdate(
-                productId, 
-                update,
-                { session, new: true }
-            );
+          const product = await Product.findById(productId).select('sellerId');
+        if (!product) {
+            viewLocks.delete(lockKey);
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Get location using the new function
+        const location = getLocationFromIP(ip) || { 
+            city: 'Unknown', 
+            region: 'Unknown', 
+            country: 'Unknown' 
+        };
+           // Get device info
+        const { device, browser, os } = parseUserAgent(req.headers['user-agent']);
 
             await session.commitTransaction();
             session.endSession();

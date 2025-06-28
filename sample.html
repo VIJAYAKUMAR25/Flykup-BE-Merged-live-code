@@ -1,39 +1,289 @@
 <!DOCTYPE html>
-<html lang="en" style="color:#333; font-family:Arial, sans-serif; margin:0; padding:0;">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Congratulations! Your Seller Application is Approved</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Co-Host System Flow Explanation</title>
+    <style>
+        /* Basic Page Styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #1c1e21;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .main-container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #dddfe2;
+            border-radius: 8px;
+        }
+        h1, h2, h3, h4 {
+            color: #0d1120;
+            border-bottom: 2px solid #e7e7e7;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.75em; }
+        h3 { font-size: 1.5em; border-bottom-style: dashed; }
+        h4 { font-size: 1.25em; border-bottom: none; }
+        code {
+            background-color: #e7e7e7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.9em;
+        }
+        .explanation {
+            background-color: #fffbe6;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .explanation p { margin: 0; }
+        .navigation {
+            background-color: #333;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .navigation a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            margin: 0 20px;
+            font-weight: bold;
+        }
+        /* Card Styling */
+        .invitation-card {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            border-left: 6px solid;
+            overflow: hidden;
+        }
+        .invitation-card.pending { border-color: #007bff; }
+        .invitation-card.accepted { border-color: #28a745; }
+        .invitation-card.past { border-color: #6c757d; }
+        .card-header, .card-body, .card-actions { padding: 20px; }
+        .card-header { display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #f0f0f0; }
+        .card-header img { width: 50px; height: 50px; border-radius: 50%; }
+        .card-header h4 { margin: 0; border: none; padding: 0; }
+        .card-header p { margin: 0; color: #65676b; }
+        .badge { padding: 5px 12px; border-radius: 15px; font-size: 0.8em; font-weight: bold; color: white; margin-left: auto; }
+        .badge-pending { background-color: #007bff; }
+        .badge-accepted { background-color: #28a745; }
+        .badge-past { background-color: #6c757d; }
+        .card-actions { display: flex; gap: 10px; background-color: #f7f7f7; }
+        /* Form & Button Styling */
+        .form-card { background: #f9f9f9; padding: 30px; border: 1px solid #e7e7e7; border-radius: 8px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"], input[type="datetime-local"] { width: 95%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        .btn { padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; font-weight: bold; text-decoration: none; display: inline-block; text-align: center; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-accept { background-color: #28a745; color: white; width: 100%; }
+        .btn-decline { background-color: #dc3545; color: white; width: 100%; }
+        .btn-join { background-color: #17a2b8; color: white; font-size: 1.1em; }
+    </style>
 </head>
-<body style="margin:0; padding:16px; background-color:#f9f9f9; font-family:Arial, sans-serif;">
-  <div style="max-width:600px; margin:0 auto; background-color:white; border-radius:8px; box-shadow:0 4px 6px rgba(0, 0, 0, 0.1);">
-    <div style="background-color:#2c2c2c; padding:24px; text-align:center; border-top-left-radius:8px; border-top-right-radius:8px;">
-      <img src="https://d2jp9e7w3mhbvf.cloudfront.net/products/bd654f06-fe3b-4417-b995-2a31a3b25ae2_Logo-Flykup.png" alt="Flykup Logo" style="height:40px;">
+<body>
+
+    <div class="main-container">
+        <h1>Co-Host System Flow: Complete Explanation</h1>
+        <div class="explanation">
+            <p><strong>Note:</strong> This is a static HTML/CSS demonstration. The forms will not actually submit data. Each "action" is explained below the visual mock-up, detailing the API call that would happen in a real application. The flow simulates a traditional multi-page web application where each action reloads the page.</p>
+        </div>
+
+        <div class="navigation">
+            <a href="#host-view">HOST'S JOURNEY</a>
+            <a href="#cohost-view">CO-HOST'S JOURNEY</a>
+        </div>
+
+        <section id="host-view">
+            <h2>Part 1: The Host's Journey</h2>
+
+            <h3>Step 1: Host Invites a Co-host While Creating a Show</h3>
+            <h4>What the Host Sees:</h4>
+            <p>The host fills out a form to create their new live show. There is an optional field to enter the User ID of the person they want to invite as a co-host.</p>
+            
+            <form action="#api-explanation" method="POST" class="form-card">
+                <div class="form-group">
+                    <label for="title">Show Title</label>
+                    <input type="text" id="title" name="title" value="My Awesome Product Launch">
+                </div>
+                <div class="form-group">
+                    <label for="coHostUserId">Co-host's User ID (Optional)</label>
+                    <input type="text" id="coHostUserId" name="coHostUserId" value="cohost_user_123">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Show & Invite</button>
+            </form>
+
+            <div class="explanation">
+                <h4>The Action:</h4>
+                <p>When the host clicks the "Create Show & Invite" button, the browser submits this form to the server.</p>
+                <h4>The API Call (Behind the Scenes):</h4>
+                <ul>
+                    <li><strong>Method:</strong> <code>POST</code></li>
+                    <li><strong>Route:</strong> <code>/shows</code></li>
+                    <li><strong>Request Body:</strong> <code>title=My+Awesome+Product+Launch&coHostUserId=cohost_user_123</code></li>
+                    <li><strong>Why We Do This:</strong> This single request tells the server to perform two crucial database operations: 1. Create the main `Show` document. 2. Create a related `CoHostInvite` document with a `status` of `"pending"`.</li>
+                </ul>
+                <h4>Server Response:</h4>
+                <p>The server creates the records and responds with a redirect, sending the host to their dashboard. <strong>(Status: <code>302 Found</code>, Header: <code>Location: /dashboard</code>)</strong></p>
+            </div>
+
+            <hr>
+
+            <h3>Step 2: Host Starts the Live Stream</h3>
+             <h4>The Action:</h4>
+            <p>Sometime later, the host is ready and clicks a "Go Live" button on their dashboard for this specific show.</p>
+            
+            <div class="explanation">
+                <h4>The API Call (Behind the Scenes):</h4>
+                <ul>
+                    <li><strong>Method:</strong> <code>PATCH</code> (often sent as a POST from a simple form)</li>
+                    <li><strong>Route:</strong> <code>/shows/:showId/start</code></li>
+                    <li><strong>Request Body:</strong> <code>{ liveStreamId: "new_stream_abcde" }</code></li>
+                    <li><strong>Why We Do This:</strong> This is the most important trigger in the system. The backend controller does two things: 1. It updates the `Show` document's status to `"live"`. 2. It finds the **accepted** `CoHostInvite` document and **updates it by adding the `liveStreamId`**. This is the signal the co-host is waiting for.</li>
+                </ul>
+                <h4>Server Response:</h4>
+                <p>The server confirms the stream has started and responds with success. <strong>(Status: <code>200 OK</code>, Body: <code>{ "status": true, "message": "Live Stream started..." }</code>)</strong></p>
+            </div>
+        </section>
+
+        <section id="cohost-view">
+            <h2>Part 2: The Co-host's Journey</h2>
+
+            <h3>Step 1: Co-host Receives and Views the Invitation</h3>
+            <h4>What the Co-host Sees:</h4>
+            <p>The co-host navigates to their "My Invitations" page. The server fetches their invites from the database and renders this card. Because the status is `"pending"`, it shows "Accept" and "Decline" buttons.</p>
+            
+            <div class="invitation-card pending">
+                <div class="card-header">
+                    <img src="https://i.pravatar.cc/50?u=host" alt="Host Avatar">
+                    <div>
+                        <h4>Invitation from MainHost</h4>
+                        <p>Show: My Awesome Product Launch</p>
+                    </div>
+                    <span class="badge badge-pending">Pending</span>
+                </div>
+                <div class="card-body">
+                    <p>You have been invited to co-host this live stream.</p>
+                </div>
+                <div class="card-actions">
+                    <form action="#cohost-view" method="POST">
+                        <input type="hidden" name="action" value="accepted">
+                        <button type="submit" class="btn btn-accept">Accept</button>
+                    </form>
+                    <form action="#cohost-view" method="POST">
+                        <input type="hidden" name="action" value="rejected">
+                        <button type="submit" class="btn btn-decline">Decline</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="explanation">
+                <h4>The Action:</h4>
+                <p>The co-host clicks the "Accept" button. The form is submitted to the server.</p>
+                <h4>The API Call (Behind the Scenes):</h4>
+                <ul>
+                    <li><strong>Method:</strong> <code>POST</code></li>
+                    <li><strong>Route:</strong> <code>/cohost/respond/:inviteId</code></li>
+                    <li><strong>Request Body:</strong> <code>action=accepted</code></li>
+                    <li><strong>Why We Do This:</strong> To permanently record the co-host's decision. The backend controller updates the `CoHostInvite.status` to `"accepted"` and populates the `coHost` field on the main `Show` document.</li>
+                </ul>
+                <h4>Server Response:</h4>
+                <p>The server responds with a redirect back to this same page. <strong>(Status: <code>302 Found</code>, Header: <code>Location: /invitations</code>)</strong></p>
+            </div>
+            
+            <hr>
+
+            <h3>Step 2: The Invitation is Accepted (Waiting for Live)</h3>
+            <h4>What the Co-host Sees:</h4>
+            <p>After the page reloads from Step 1, the server sees the invitation status is now `"accepted"`. It renders the card in its accepted state. Notice there is no "Join" button yet, because the `liveStreamId` has not been added by the host.</p>
+
+            <div class="invitation-card accepted">
+                <div class="card-header">
+                    <img src="https://i.pravatar.cc/50?u=host" alt="Host Avatar">
+                    <div>
+                        <h4>Invitation from MainHost</h4>
+                        <p>Show: My Awesome Product Launch</p>
+                    </div>
+                    <span class="badge badge-accepted">Accepted</span>
+                </div>
+                <div class="card-body">
+                    <p>You have accepted! Waiting for the host to start the stream.</p>
+                    <p><small><strong>Important:</strong> In a pure HTML/CSS app, you must manually <a href="#cohost-view">Refresh this Page</a> to see the "Join" button after the host goes live.</small></p>
+                </div>
+            </div>
+
+            <hr>
+
+            <h3>Step 3: The Show is Live! (After Manual Refresh)</h3>
+            <h4>What the Co-host Sees:</h4>
+            <p>The host has started the stream. The co-host **refreshes their page**. The server now fetches the invitation and sees that it has both `status: "accepted"` AND a `liveStreamId`. It now renders the card with the "Join Live Now" button.</p>
+
+            <div class="invitation-card accepted">
+                <div class="card-header">
+                    <img src="https://i.pravatar.cc/50?u=host" alt="Host Avatar">
+                    <div>
+                        <h4>Invitation from MainHost</h4>
+                        <p>Show: My Awesome Product Launch</p>
+                    </div>
+                    <span class="badge badge-accepted">Accepted</span>
+                </div>
+                <div class="card-body">
+                    <p>The show is live! Join your host on stream now.</p>
+                </div>
+                <div class="card-actions">
+                    <a href="/some-live-stream-url" class="btn btn-join">Join Live Now</a>
+                </div>
+            </div>
+            
+            <div class="explanation">
+                <h4>The Action:</h4>
+                <p>The co-host clicks the "Join Live Now" link.</p>
+                <h4>The API Call (Behind the Scenes):</h4>
+                <ul>
+                    <li><strong>Method:</strong> <code>GET</code></li>
+                    <li><strong>Route:</strong> <code>/cohost/join/:liveStreamId</code></li>
+                    <li><strong>Why We Do This:</strong> To navigate the co-host to the actual streaming page (like `StartStream.jsx` in your React app) where the WebRTC connection will be established.</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <h3>Step 4: Past / Inactive Invitations</h3>
+            <h4>What the Co-host Sees:</h4>
+            <p>If an invitation is cancelled, rejected, or has ended, it moves to a "Past" section and displays a read-only message explaining why. This information comes from the `status` and `reason` fields in the database.</p>
+
+             <div class="invitation-card past">
+                <div class="card-header">
+                    <span class="badge badge-past">Past</span>
+                </div>
+                <div class="card-body">
+                    <p><strong>Reason:</strong> The host has invited a different co-host for this show.</p>
+                </div>
+            </div>
+             <div class="invitation-card past">
+                <div class="card-header">
+                    <span class="badge badge-past">Past</span>
+                </div>
+                <div class="card-body">
+                    <p><strong>Reason:</strong> The host has removed you from this stream.</p>
+                </div>
+            </div>
+        </section>
     </div>
-    <div style="padding:24px; color:#333;">
-      <h1 style="font-size:20px; font-weight:bold; margin:0 0 16px;">Congratulations, {userName}!</h1>
-      <p style="font-size:16px; line-height:1.6;">
-        We are thrilled to inform you that your seller application has been <strong>approved</strong>. Welcome to the Flykup seller community!
-      </p>
-      <p style="font-size:16px; line-height:1.6;">
-        You can now log in to your account and start showcasing your products to a wider audience through shoppable videos.
-      </p>
-      <div style="text-align:center; margin:24px 0;">
-        <a href="https://user-vercel-flykup.vercel.app/login" target="_blank" rel="noopener noreferrer" style="background-color:#2c2c2c; color:#FFD700; font-size:16px; font-weight:600; padding:12px 24px; border-radius:4px; text-decoration:none;">
-          Go to Your Dashboard
-        </a>
-      </div>
-      <p style="font-size:14px; line-height:1.6;">
-        If you have any questions, feel free to contact our support team. We're here to help you succeed.
-      </p>
-      <p style="font-size:14px; color:#333; margin-top:24px; margin-bottom:0;">
-        Best regards,<br>
-        <span style="font-weight:bold;">The Flykup Team</span>
-      </p>
-    </div>
-    <div style="color:#757575; font-size:12px; text-align:center; padding:16px;">
-      <p style="margin:0;">This is an automated message. Please do not reply to this email.</p>
-    </div>
-  </div>
+
 </body>
 </html>

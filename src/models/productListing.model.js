@@ -103,6 +103,24 @@ const ProductListingSchema = new Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    viewCount: {
+      type: Number,
+      default: 0
+    },
+    uniqueViewCount: {
+      type: Number,
+      default: 0
+    },
+    reviewCount: {
+      type: Number,
+      default: 0
+    },
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5
     }
   },
   { timestamps: true }

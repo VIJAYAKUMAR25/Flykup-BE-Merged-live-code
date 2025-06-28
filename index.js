@@ -26,7 +26,7 @@ import followRouter from './src/routes/follow.routes.js';
 import searchBarRouter from './src/routes/searchBar.routes.js';
 import shipperRouter from './src/routes/shipper.routes.js';
 import azureFileUploadRouter from './src/routes/azure.routes.js';
-import videoRouter  from './src/routes/video.routes.js';
+import videoRouter  from './src/routes/video.routes.js';  
 import globalSearchRouter from './src/routes/globalSearch.routes.js';
 import initializeSocket from './src/utils/socket.js';
 import { blockAccessMiddleware } from './src/utils/blockAccess.js';
@@ -35,16 +35,23 @@ import statusRouter from './src/routes/statusRouter.js';
 import adminLogsRouter from './src/routes/admin/adminLoginLog.routes.js';
 import notificationRouter from './src/routes/notification.routes.js';
 import coHostRouter from './src/routes/coHost.routes.js';
+import productInteractionRoutes from './src/routes/productInteraction.routes.js';
+import ipMiddleware from './src/utils/ipMiddleware.js';
+import { scheduleGeoIPUpdates } from './src/utils/geoip-scheduler.js';
 
 
 // Initialize Express app and HTTP server
 const app = express();
+
 const server = http.createServer(app);
+
+// Initialize GeoIP scheduler
+scheduleGeoIPUpdates();
 // --- Configure Trust Proxy ---
 // IMPORTANT: Set this EARLY, before routes/middleware using req.ip
-app.set('trust proxy', 1); // Trust the first hop (common for Render, Heroku, etc.)
+app.set('trust proxy', true); // Trust the first hop (common for Render, Heroku, etc.)
 // --- End Configuration ---
-
+app.use(ipMiddleware); 
 // CORS
 app.use(cors({
   origin: [
@@ -68,7 +75,6 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-
 // Routes
 app.use('/api/home', blockAccessMiddleware, statusRouter);
 app.use('/api/auth', blockAccessMiddleware, authRouter);
@@ -90,6 +96,7 @@ app.use('/api/videos',blockAccessMiddleware, videoRouter);
 app.use('/api/search',blockAccessMiddleware, globalSearchRouter);
 app.use('/api/notify', blockAccessMiddleware, notificationRouter);
 app.use('/api/cohost',blockAccessMiddleware, coHostRouter);
+app.use('/api/product-views', productInteractionRoutes);
 
 // --- 🔥 Admin Routes (without blocking middleware) ---
 // These routers are mounted *without* the blockAccessMiddleware

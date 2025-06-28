@@ -10,6 +10,7 @@ const productInteractionSchema = new mongoose.Schema({
         region: String,
         country: String
     },
+    
     device: { type: String, enum: ['mobile', 'desktop', 'tablet', 'other'] },
     browser: String,
     os: String

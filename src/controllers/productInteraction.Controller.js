@@ -9,11 +9,9 @@ const viewLocks = new Map();
 export const trackProductView = async (req, res) => {
     const { productId } = req.params;
     const userId = req.user?._id;
-       const ip = req.clientIp; // Now using the IP from middleware
-    // Create a unique lock key per user/product combination
+    const ip = req.clientIp;
     const lockKey = userId ? `${userId}-${productId}` : `${req.clientIp}-${productId}`;
     
-    // Check if request is already processing
     if (viewLocks.has(lockKey)) {
         return res.status(202).json({ 
             status: 'processing', 
@@ -22,9 +20,10 @@ export const trackProductView = async (req, res) => {
     }
 
     try {
-        // Set lock
         viewLocks.set(lockKey, true);
-          console.log(`[Tracker] Client IP: ${req.clientIp}`); // Add this
+        console.log(`[Tracker] Client IP: ${req.clientIp}`);
+        
+        // Only declare product once here
         const product = await Product.findById(productId).select('sellerId');
         if (!product) {
             viewLocks.delete(lockKey);
@@ -32,10 +31,13 @@ export const trackProductView = async (req, res) => {
         }
 
         // Get location and device info
-           const location = await getLocationFromIP(ip);
+        const location = getLocationFromIP(ip) || { 
+            city: 'Unknown', 
+            region: 'Unknown', 
+            country: 'Unknown' 
+        };
         const { device, browser, os } = parseUserAgent(req.headers['user-agent']);
 
-        // Start transaction
         const session = await mongoose.startSession();
         session.startTransaction();
 
@@ -52,23 +54,15 @@ export const trackProductView = async (req, res) => {
                 os
             }], { session });
 
-            // Update product counters atomically
+            // Update product counters
             const update = { $inc: { viewCount: 1 } };
             if (userId) update.$inc.uniqueViewCount = 1;
-          const product = await Product.findById(productId).select('sellerId');
-        if (!product) {
-            viewLocks.delete(lockKey);
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        // Get location using the new function
-        const location = getLocationFromIP(ip) || { 
-            city: 'Unknown', 
-            region: 'Unknown', 
-            country: 'Unknown' 
-        };
-           // Get device info
-        const { device, browser, os } = parseUserAgent(req.headers['user-agent']);
+            
+            await Product.findByIdAndUpdate(
+                productId, 
+                update,
+                { session, new: true }
+            );
 
             await session.commitTransaction();
             session.endSession();
@@ -86,7 +80,6 @@ export const trackProductView = async (req, res) => {
             error: error.message
         });
     } finally {
-        // Release lock
         viewLocks.delete(lockKey);
     }
 };

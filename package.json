@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "update-geoip": "mkdir -p geoip-data && curl --ssl-no-revoke -sS \"https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MAXMIND_LICENSE_KEY}&suffix=tar.gz\" -o geoip.tar.gz && tar -xzf geoip.tar.gz --strip-components=1 -C geoip-data && rm geoip.tar.gz",
+   "update-geoip": "node -e \"require('fs').mkdirSync('geoip-data', { recursive: true })\" && curl --ssl-no-revoke -sS \"https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MAXMIND_LICENSE_KEY}&suffix=tar.gz\" -o geoip.tar.gz && tar -xzf geoip.tar.gz --strip-components=1 -C geoip-data && node -e \"require('fs').unlinkSync('geoip.tar.gz')\"",
     "postinstall": "npm run update-geoip"
 },
   "keywords": [

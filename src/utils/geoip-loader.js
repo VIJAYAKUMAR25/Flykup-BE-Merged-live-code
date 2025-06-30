@@ -68,7 +68,6 @@ export const loadGeoIPDatabase = async () => {
                 console.error('Failed to restore backup:', restoreError);
             }
         }
-        
         return null;
     }
 };
@@ -77,6 +76,15 @@ export const getLocationFromIP = (ip) => {
     if (!cityLookup) {
         console.error('GeoIP database not loaded');
         return null;
+    }
+    
+    // Handle local IPs
+    if (ip === '::1' || ip === '127.0.0.1') {
+        return {
+            city: 'Local',
+            region: 'Development',
+            country: 'Localhost'
+        };
     }
     
     try {

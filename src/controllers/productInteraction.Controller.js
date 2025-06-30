@@ -10,7 +10,7 @@ const viewLocks = new Map();
 export const trackProductView = async (req, res) => {
     const { productId } = req.params;
     const userId = req.user?._id;
-    const ip = req.clientIp;
+    const ip = req.headers['x-forwarded-for']?.split(',').shift() || req.socket.remoteAddress;
     const lockKey = userId ? `${userId}-${productId}` : `${ip}-${productId}`;
 
     if (viewLocks.has(lockKey)) {

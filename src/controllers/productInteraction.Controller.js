@@ -11,7 +11,9 @@ export const trackProductView = async (req, res) => {
     const { productId } = req.params;
     const userId = req.user?._id;
     // Get the IP address from Vercel's header
-    const ip = req.headers['x-forwarded-for']?.split(',').shift() || req.socket.remoteAddress;
+    const ip = req.headers['x-client-ip'] || 
+                   req.headers['x-forwarded-for']?.split(',').shift() || 
+                   req.socket.remoteAddress;
     
     // --- START DEBUG LOGGING ---
     console.log('[Tracker] Attempting to track view for IP:', ip);
@@ -48,11 +50,7 @@ export const trackProductView = async (req, res) => {
             }
         }
 
-        const location = await getLocationFromIP(ip) || { 
-            city: 'Unknown', 
-            region: 'Unknown', 
-            country: 'Unknown' 
-        };
+        const location = await getLocationFromIP(ip);
         
         // --- START DEBUG LOGGING ---
         console.log('[Tracker] Location resolved to:', location);
@@ -68,10 +66,12 @@ export const trackProductView = async (req, res) => {
                 product: productId,
                 user: userId,
                 seller: product.sellerId,
-                location: location, // Corrected: Don't add 'ip' here as it's not in the schema
+                location: location, 
                 device,
                 browser,
-                os
+                os,
+                ip: ip,  // Store IP address
+                isIndianRegion: location.isIndianRegion  // Store India flag
             }], { session });
 
             const update = { $inc: { viewCount: 1, uniqueViewCount: 1 } };
@@ -352,13 +352,33 @@ export const getSellerProductAnalytics = async (req, res) => {
                             _id: 0
                         }},
                         { $sort: { lastViewed: -1 } }
+                    ],
+                    // INDIAN-SPECIFIC ANALYTICS
+                    "indianViewsByRegion": [
+                        { $match: { isIndianRegion: true } },
+                        { $group: { 
+                            _id: "$location.region", 
+                            count: { $sum: 1 } 
+                        }},
+                        { $sort: { count: -1 } }
+                    ],
+                    "indianDeviceBreakdown": [
+                        { $match: { isIndianRegion: true } },
+                        { $group: {
+                            _id: "$device",
+                            count: { $sum: 1 }
+                        }},
+                        { $project: {
+                            device: { $ifNull: ["$_id", "unknown"] },
+                            count: 1,
+                            _id: 0
+                        }}
                     ]
                 }
             }
         ]);
 
         res.status(200).json({ success: true, data: analytics[0] });
-
     } catch (error) {
         console.error('Error fetching seller analytics:', error);
         res.status(500).json({

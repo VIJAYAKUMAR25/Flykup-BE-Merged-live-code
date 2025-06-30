@@ -11,7 +11,9 @@ const productInteractionSchema = new mongoose.Schema({
     },
     device: { type: String, enum: ['mobile', 'desktop', 'tablet', 'other'] },
     browser: String,
-    os: String
+    os: String,
+    ip: { type: String, required: true },
+    isIndianRegion: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Ensures a user's view is counted only once per product

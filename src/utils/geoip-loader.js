@@ -16,6 +16,13 @@ if (!fs.existsSync(GEOIP_DIR)) {
     fs.mkdirSync(GEOIP_DIR, { recursive: true });
 }
 
+// Predefined Indian regions for faster lookup
+const INDIAN_REGIONS = new Set([
+    'IN', 'IND', 'India', 'INDIA', 'BH', 'BR', 'CT', 'GA', 'GJ', 'HR', 
+    'HP', 'JK', 'JH', 'KA', 'KL', 'MP', 'MH', 'MN', 'ML', 'MZ', 'NL', 
+    'OR', 'PB', 'RJ', 'SK', 'TN', 'TG', 'TR', 'UP', 'UT', 'WB'
+]);
+
 export const loadGeoIPDatabase = async () => {
     try {
         // Check if database file exists
@@ -75,7 +82,12 @@ export const loadGeoIPDatabase = async () => {
 export const getLocationFromIP = (ip) => {
     if (!cityLookup) {
         console.error('GeoIP database not loaded');
-        return null;
+        return {
+            city: 'Unknown',
+            region: 'Unknown',
+            country: 'Unknown',
+            isIndianRegion: false
+        };
     }
     
     // Handle local IPs
@@ -83,22 +95,45 @@ export const getLocationFromIP = (ip) => {
         return {
             city: 'Local',
             region: 'Development',
-            country: 'Localhost'
+            country: 'Localhost',
+            isIndianRegion: false
         };
     }
     
     try {
         const location = cityLookup.get(ip);
-        if (!location) return null;
+        if (!location) {
+            return {
+                city: 'Unknown',
+                region: 'Unknown',
+                country: 'Unknown',
+                isIndianRegion: false
+            };
+        }
+        
+        // Extract country code
+        const countryCode = location.country?.iso_code || 'Unknown';
+        const isIndian = INDIAN_REGIONS.has(countryCode);
+        
+        // Optimize for Indian regions
+        const region = isIndian 
+            ? location.subdivisions?.[0]?.iso_code || 'Unknown'
+            : location.subdivisions?.[0]?.names?.en || 'Unknown';
         
         return {
             city: location.city?.names?.en || 'Unknown',
-            region: location.subdivisions?.[0]?.names?.en || 'Unknown',
-            country: location.country?.names?.en || 'Unknown'
+            region: region,
+            country: countryCode,
+            isIndianRegion: isIndian
         };
     } catch (error) {
         console.error(`Error looking up IP ${ip}:`, error);
-        return null;
+        return {
+            city: 'Error',
+            region: 'Error',
+            country: 'Error',
+            isIndianRegion: false
+        };
     }
 };
 

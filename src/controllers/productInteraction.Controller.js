@@ -10,7 +10,13 @@ const viewLocks = new Map();
 export const trackProductView = async (req, res) => {
     const { productId } = req.params;
     const userId = req.user?._id;
+    // Get the IP address from Vercel's header
     const ip = req.headers['x-forwarded-for']?.split(',').shift() || req.socket.remoteAddress;
+    
+    // --- START DEBUG LOGGING ---
+    console.log('[Tracker] Attempting to track view for IP:', ip);
+    // --- END DEBUG LOGGING ---
+
     const lockKey = userId ? `${userId}-${productId}` : `${ip}-${productId}`;
 
     if (viewLocks.has(lockKey)) {
@@ -29,22 +35,29 @@ export const trackProductView = async (req, res) => {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Check for an existing view
-        const existingView = await ProductInteraction.findOne({
-            product: productId,
-            ...(userId ? { user: userId } : { 'location.ip': ip })
-        });
+        // For now, we only prevent duplicate views for logged-in users
+        if (userId) {
+            const existingView = await ProductInteraction.findOne({
+                product: productId,
+                user: userId,
+            });
 
-        if (existingView) {
-            viewLocks.delete(lockKey);
-            return res.status(200).json({ success: true, message: 'View already tracked' });
+            if (existingView) {
+                viewLocks.delete(lockKey);
+                return res.status(200).json({ success: true, message: 'View already tracked for this user' });
+            }
         }
 
-        const location = getLocationFromIP(ip) || {
-            city: 'Unknown',
-            region: 'Unknown',
-            country: 'Unknown'
+        const location = await getLocationFromIP(ip) || { 
+            city: 'Unknown', 
+            region: 'Unknown', 
+            country: 'Unknown' 
         };
+        
+        // --- START DEBUG LOGGING ---
+        console.log('[Tracker] Location resolved to:', location);
+        // --- END DEBUG LOGGING ---
+
         const { device, browser, os } = parseUserAgent(req.headers['user-agent']);
 
         const session = await mongoose.startSession();
@@ -55,26 +68,23 @@ export const trackProductView = async (req, res) => {
                 product: productId,
                 user: userId,
                 seller: product.sellerId,
-                location: { ...location, ip },
+                location: location, // Corrected: Don't add 'ip' here as it's not in the schema
                 device,
                 browser,
                 os
             }], { session });
 
-            const update = { $inc: { viewCount: 1 } };
-            if (userId || !existingView) {
-                update.$inc.uniqueViewCount = 1;
-            }
-
+            const update = { $inc: { viewCount: 1, uniqueViewCount: 1 } };
+            
             await Product.findByIdAndUpdate(
-                productId,
+                productId, 
                 update,
                 { session, new: true }
             );
 
             await session.commitTransaction();
             session.endSession();
-
+            
             return res.status(201).json({ success: true });
         } catch (error) {
             await session.abortTransaction();

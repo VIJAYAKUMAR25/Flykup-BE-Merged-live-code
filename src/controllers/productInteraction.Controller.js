@@ -4,37 +4,46 @@ import { parseUserAgent, getLocationFromIP } from '../utils/deviceUtils.js';
 import mongoose from 'mongoose';
 // Track a product view
 // controllers/productInteraction.controller.js
+
 const viewLocks = new Map();
 
 export const trackProductView = async (req, res) => {
     const { productId } = req.params;
     const userId = req.user?._id;
     const ip = req.clientIp;
-    const lockKey = userId ? `${userId}-${productId}` : `${req.clientIp}-${productId}`;
-    
+    const lockKey = userId ? `${userId}-${productId}` : `${ip}-${productId}`;
+
     if (viewLocks.has(lockKey)) {
-        return res.status(202).json({ 
-            status: 'processing', 
-            message: 'View tracking in progress' 
+        return res.status(202).json({
+            status: 'processing',
+            message: 'View tracking in progress'
         });
     }
 
     try {
         viewLocks.set(lockKey, true);
-        console.log(`[Tracker] Client IP: ${req.clientIp}`);
-        
-        // Only declare product once here
+
         const product = await Product.findById(productId).select('sellerId');
         if (!product) {
             viewLocks.delete(lockKey);
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Get location and device info
-        const location = getLocationFromIP(ip) || { 
-            city: 'Unknown', 
-            region: 'Unknown', 
-            country: 'Unknown' 
+        // Check for an existing view
+        const existingView = await ProductInteraction.findOne({
+            product: productId,
+            ...(userId ? { user: userId } : { 'location.ip': ip })
+        });
+
+        if (existingView) {
+            viewLocks.delete(lockKey);
+            return res.status(200).json({ success: true, message: 'View already tracked' });
+        }
+
+        const location = getLocationFromIP(ip) || {
+            city: 'Unknown',
+            region: 'Unknown',
+            country: 'Unknown'
         };
         const { device, browser, os } = parseUserAgent(req.headers['user-agent']);
 
@@ -42,31 +51,30 @@ export const trackProductView = async (req, res) => {
         session.startTransaction();
 
         try {
-            // Create new interaction
             await ProductInteraction.create([{
                 product: productId,
                 user: userId,
                 seller: product.sellerId,
-                type: 'view',
-                location,
+                location: { ...location, ip },
                 device,
                 browser,
                 os
             }], { session });
 
-            // Update product counters
             const update = { $inc: { viewCount: 1 } };
-            if (userId) update.$inc.uniqueViewCount = 1;
-            
+            if (userId || !existingView) {
+                update.$inc.uniqueViewCount = 1;
+            }
+
             await Product.findByIdAndUpdate(
-                productId, 
+                productId,
                 update,
                 { session, new: true }
             );
 
             await session.commitTransaction();
             session.endSession();
-            
+
             return res.status(201).json({ success: true });
         } catch (error) {
             await session.abortTransaction();
@@ -83,7 +91,6 @@ export const trackProductView = async (req, res) => {
         viewLocks.delete(lockKey);
     }
 };
-
 // Submit a product review
 export const submitProductReview = async (req, res) => {
   try {
@@ -283,7 +290,7 @@ export const getAnalyticsData = async (req, res) => {
 // Get paginated interactions
 export const getSellerProductAnalytics = async (req, res) => {
     try {
-        const { sellerId } = req.params; // Assuming you'll have a route like '/api/seller/:sellerId/analytics'
+        const { sellerId } = req.params;
         const { productId, period = '30d' } = req.query;
 
         const dateFilter = {};
@@ -293,7 +300,7 @@ export const getSellerProductAnalytics = async (req, res) => {
             dateFilter.$gte = new Date(new Date() - 30 * 24 * 60 * 60 * 1000);
         }
 
-        const matchQuery = { seller: new mongoose.Types.ObjectId(sellerId), type: 'view' };
+        const matchQuery = { seller: new mongoose.Types.ObjectId(sellerId) };
         if(productId) {
             matchQuery.product = new mongoose.Types.ObjectId(productId);
         }
@@ -322,6 +329,19 @@ export const getSellerProductAnalytics = async (req, res) => {
                     "viewsByDevice": [
                         { $group: { _id: "$device", count: { $sum: 1 } } },
                         { $sort: { count: -1 } }
+                    ],
+                    "uniqueViewers": [
+                        { $group: { _id: "$user", lastViewed: { $max: "$createdAt" }, locations: { $addToSet: "$location" } } },
+                        { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "userDetails" } },
+                        { $unwind: { path: "$userDetails", preserveNullAndEmptyArrays: true } },
+                        { $project: {
+                            userId: "$_id",
+                            name: { $ifNull: ["$userDetails.name", "Anonymous"] },
+                            lastViewed: 1,
+                            locations: 1,
+                            _id: 0
+                        }},
+                        { $sort: { lastViewed: -1 } }
                     ]
                 }
             }

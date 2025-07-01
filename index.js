@@ -66,6 +66,7 @@ app.use(cors({
         "https://flykup-digi-store.vercel.app",
         "https://flykup-demo.vercel.app",
         "http://13.127.105.190:5070",
+        "https://admin-flykup.vercel.app"
     ],
     credentials: true
 }));

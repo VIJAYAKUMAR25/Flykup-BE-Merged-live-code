@@ -20,6 +20,7 @@ export const initializeSocket = (server) => {
                 "https://admin.flykup.live",
                 "https://flykup-fe-merged-new-3.vercel.app",
                 "https://flykup-demo.vercel.app",
+                "https://admin-flykup.vercel.app"
             ],
             credentials: true,
             methods: ["GET", "POST"], 

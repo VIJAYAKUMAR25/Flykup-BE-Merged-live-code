@@ -9,6 +9,8 @@ const productInteractionSchema = new mongoose.Schema({
         region: String,
         country: String
     },
+    // --- NEW FIELD ---
+    platform: { type: String, enum: ['web', 'mobile', 'unknown'], default: 'mobile' }, 
     device: { type: String, enum: ['mobile', 'desktop', 'tablet', 'other'] },
     browser: String,
     os: String,
